@@ -1,0 +1,24 @@
+IF(CMAKE_COMPILER_IS_GNUCC)
+SET(ANSI_CFLAGS "-ansi -std=c89 -pedantic")
+SET(CORE_CFLAGS "-Wall -O2 -I./ ${DEBUG_CFLAGS}")
+ENDIF(CMAKE_COMPILER_IS_GNUCC)
+
+INCLUDE(${PROJECT_SOURCE_DIR}/INCLUDES.cmk)
+LINK_DIRECTORIES( ${lib_contrib_dir}  )
+
+ADD_LIBRARY(pubapi pubapi.c ${PROJECT_SOURCE_DIR}/x_dll.c) 
+
+if(ANDROID)
+target_link_libraries( pubapi log )
+endif(ANDROID)
+
+SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CORE_CFLAGS} ${DEBUG_CFLAGS}")
+
+target_link_libraries( pubapi xw )
+
+#INSTALL(TARGETS pubapi DESTINATION ${PLUGINS_DIR})
+
+INCLUDE(CPack)
+
+ENABLE_TESTING()
+

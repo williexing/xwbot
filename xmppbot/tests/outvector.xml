@@ -1,0 +1,20 @@
+<bus><stream:stream><stream:features><starttls/><compression><method>zlib</method>
+			
+		</compression><mechanisms><mechanism>PLAIN</mechanism><mechanism>DIGEST-MD5</mechanism>
+			
+			
+		</mechanisms><c/><register/>
+		
+		
+		
+		
+		
+	</stream:features><stream:error><xml-not-well-formed/>
+		
+	</stream:error>
+	
+	
+</stream:stream>
+
+
+</bus>

@@ -1,0 +1,21 @@
+<?xml version='1.0'?>
+<stream:stream xmlns='jabber:client' stream='http://etherx.jabber.org/streams'
+	id='701839670' from='jabber.ru' version='1.0' xml:lang='ru'>
+	<stream:features>
+		<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls' />
+		<compression xmlns='http://jabber.org/features/compress'>
+			<method>zlib</method>
+		</compression>
+		<mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
+			<mechanism>PLAIN</mechanism>
+			<mechanism>DIGEST-MD5</mechanism>
+		</mechanisms>
+		<c xmlns='http://jabber.org/protocol/caps' hash='sha-1'
+			node='http://www.process-one.net/en/ejabberd/' ver='rvAR01fKsc40hT0hOLGDuG25y9o=' />
+		<register xmlns='http://jabber.org/features/iq-register' />
+	</stream:features>
+	<stream:error>
+		<xml-not-well-formed xmlns='urn:ietf:params:xml:ns:xmpp-streams' />
+	</stream:error>
+</stream:stream>
+

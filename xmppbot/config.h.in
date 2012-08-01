@@ -1,0 +1,7 @@
+#ifndef _BOTCONFIG_H_
+#define _BOTCONFIG_H_
+
+#cmakedefine PLUGINS_DIR "@PLUGINS_DIR@"
+
+#endif /* _CONTCONFIG_H_ */
+

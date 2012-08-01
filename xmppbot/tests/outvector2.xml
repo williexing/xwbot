@@ -1,0 +1,5 @@
+<bus><stream:stream attr='qqq' xmlns:xml='http://www.w3.org/XML/1998/namespace' xml:lang='en' version='1.0' xmlns:stream='http://etherx.jabber.org/streams' xmlns='jabber:client'><tag1/><tag2/>
+
+
+</stream:stream>
+</bus>

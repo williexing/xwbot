@@ -1,0 +1,75 @@
+#ifndef X_CONFIG_H_
+#define X_CONFIG_H_
+
+#include "x_trace_defs.h"
+
+#ifdef ANDROID
+#include "x_config_android.h"
+#elif defined (IOS)
+#include "x_config_ios.h"
+#else
+#cmakedefine HAVE_STRDUP @HAVE_STRDUP@
+#cmakedefine HAVE_STRLEN @HAVE_STRLEN@
+#cmakedefine HAVE_STRCPY @HAVE_STRCPY@
+#cmakedefine HAVE_INET_NTOP @HAVE_INET_NTOP@
+#cmakedefine HAVE_INET_NTOA @HAVE_INET_NTOA@
+
+#ifdef WIN32
+#cmakedefine HAVE_MSWSOCK_H @HAVE_MSWSOCK_H@
+#cmakedefine HAVE_WINSOCK2_H @HAVE_WINSOCK2_H@
+#cmakedefine HAVE_WSA_RECVMSG @HAVE_WSA_RECVMSG@
+#else
+#cmakedefine HAVE_PTHREAD_H @HAVE_PTHREAD_H@
+#cmakedefine HAVE_SYS_UIO_H @HAVE_SYS_UIO_H@
+#cmakedefine HAVE_RECVMSG @HAVE_RECVMSG@
+#cmakedefine HAVE_SENDMSG @HAVE_SENDMSG@
+#endif
+
+#cmakedefine HAVE_CLOCK_GETTIME @HAVE_CLOCK_GETTIME@
+#cmakedefine HAVE_CLOCK_SYSCALL @HAVE_CLOCK_SYSCALL@
+#cmakedefine HAVE_DLFCN_H @HAVE_DLFCN_H@
+#cmakedefine HAVE_EPOLL_CTL @HAVE_EPOLL_CTL@
+#cmakedefine HAVE_EVENTFD @HAVE_EVENTFD@
+#cmakedefine HAVE_FLOOR @HAVE_FLOOR@
+#cmakedefine HAVE_INOTIFY_INIT @HAVE_INOTIFY_INIT@
+#cmakedefine HAVE_INTTYPES_H @HAVE_INTTYPES_H@
+#cmakedefine HAVE_KQUEUE @HAVE_KQUEUE@
+#cmakedefine HAVE_LIBRT @HAVE_LIBRT@
+#cmakedefine HAVE_MEMORY_H @HAVE_MEMORY_H@
+#cmakedefine HAVE_NANOSLEEP @HAVE_NANOSLEEP@
+#cmakedefine HAVE_POLL @HAVE_POLL@
+#cmakedefine HAVE_POLL_H @HAVE_POLL_H@
+#cmakedefine HAVE_PORT_CREATE @HAVE_PORT_CREATE@
+#cmakedefine HAVE_PORT_H @HAVE_PORT_H@
+#cmakedefine HAVE_SELECT @HAVE_SELECT@
+#cmakedefine HAVE_SIGNALFD @HAVE_SIGNALFD@
+#cmakedefine HAVE_STDINT_H @HAVE_STDINT_H@
+#cmakedefine HAVE_STDLIB_H @HAVE_STDLIB_H@
+#cmakedefine HAVE_STRINGS_H @HAVE_STRINGS_H@
+#cmakedefine HAVE_STRING_H @HAVE_STRING_H@
+#cmakedefine HAVE_SYS_EPOLL_H @HAVE_SYS_EPOLL_H@
+#cmakedefine HAVE_SYS_EVENTFD_H @HAVE_SYS_EVENTFD_H@
+#cmakedefine HAVE_SYS_EVENT_H @HAVE_SYS_EVENT_H@
+#cmakedefine HAVE_SYS_INOTIFY_H @HAVE_SYS_INOTIFY_H@
+#cmakedefine HAVE_SYS_SELECT_H @HAVE_SYS_SELECT_H@
+#cmakedefine HAVE_SYS_SIGNALFD_H @HAVE_SYS_SIGNALFD_H@
+#cmakedefine HAVE_SYS_STAT_H @HAVE_SYS_STAT_H@
+#cmakedefine HAVE_SYS_TYPES_H @HAVE_SYS_TYPES_H@
+#cmakedefine HAVE_UNISTD_H @HAVE_UNISTD_H@
+#cmakedefine HAVE_GETOPT_H @HAVE_GETOPT_H@ 
+#cmakedefine HAVE_GETOPT_LONG @HAVE_GETOPT_LONG@ 
+#cmakedefine HAVE_GETTID @HAVE_GETTID@ 
+#cmakedefine HAVE_SYSCALL @HAVE_SYSCALL@ 
+
+#cmakedefine LT_OBJDIR @LT_OBJDIR@
+#cmakedefine PACKAGE @PACKAGE@
+#cmakedefine PACKAGE_BUGREPORT @PACKAGE_BUGREPORT@
+#cmakedefine PACKAGE_NAME @PACKAGE_NAME@
+#cmakedefine PACKAGE_STRING @PACKAGE_STRING@
+#cmakedefine PACKAGE_TARNAME @PACKAGE_TARNAME@
+#cmakedefine PACKAGE_URL @PACKAGE_URL@
+#cmakedefine PACKAGE_VERSION @PACKAGE_VERSION@
+#cmakedefine VERSION @VERSION@
+#endif /* ANDROID */
+
+#endif /* X_CONFIG_H_ */

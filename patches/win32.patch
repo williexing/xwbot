@@ -1,0 +1,1663 @@
+Только в ./: 3dparty
+Только в ./: CMakeCache.txt
+Только в .//CMakeFiles: CMakeCCompiler.cmake
+Только в .//CMakeFiles: cmake.check_cache
+Только в .//CMakeFiles: CMakeCXXCompiler.cmake
+Только в .//CMakeFiles: CMakeDetermineCompilerABI_C.bin
+Только в .//CMakeFiles: CMakeDetermineCompilerABI_CXX.bin
+Только в .//CMakeFiles: CMakeDirectoryInformation.cmake
+Только в .//CMakeFiles: CMakeError.log
+Только в .//CMakeFiles: CMakeOutput.log
+Только в .//CMakeFiles: CMakeRuleHashes.txt
+Только в .//CMakeFiles: CMakeSystem.cmake
+Только в .//CMakeFiles: CMakeTmp
+Только в .//CMakeFiles: CompilerIdC
+Только в .//CMakeFiles: CompilerIdCXX
+Только в .//CMakeFiles: Makefile2
+Только в .//CMakeFiles: Makefile.cmake
+Только в .//CMakeFiles: TargetDirectories.txt
+diff -pr -x x_types.h .//CMakeFiles/xbus.dir/C.includecache ../tmp/xmppbot/CMakeFiles/xbus.dir/C.includecache
+*** .//CMakeFiles/xbus.dir/C.includecache	2012-05-30 03:06:24.755499194 +0400
+--- ../tmp/xmppbot/CMakeFiles/xbus.dir/C.includecache	2012-05-18 02:35:40.000000000 +0400
+*************** plugins/sessions_api/sessions.h
+*** 20,29 ****
+  ev.h
+  -
+  
+- /home/artemka/git/x/xwrcpt/xmppbot/x_dll.c
+- xwlib/x_types.h
+- -
+- 
+  xmppbot/3dparty/libev/ev.h
+  signal.h
+  -
+--- 20,25 ----
+*************** sys/stat.h
+*** 37,43 ****
+  -
+  
+  xmppbot/include/stun.h
+! xwlib/x_types.h
+  -
+  
+  xmppbot/include/x_parser.h
+--- 33,41 ----
+  -
+  
+  xmppbot/include/stun.h
+! netinet/in.h
+! -
+! sys/types.h
+  -
+  
+  xmppbot/include/x_parser.h
+diff -pr -x x_types.h .//CMakeFiles/xmppbot.dir/build.make ../tmp/xmppbot/CMakeFiles/xmppbot.dir/build.make
+*** .//CMakeFiles/xmppbot.dir/build.make	2012-05-30 02:37:42.265499631 +0400
+--- ../tmp/xmppbot/CMakeFiles/xmppbot.dir/build.make	2012-05-10 23:31:48.000000000 +0400
+*************** xmppbot_OBJECTS = \
+*** 81,90 ****
+  xmppbot_EXTERNAL_OBJECTS =
+  
+  output/xmppbot: xmppbot/CMakeFiles/xmppbot.dir/main.c.o
+- output/xmppbot: output/libev.so
+  output/xmppbot: output/libxw.so
+  output/xmppbot: output/libxofactory.so
+- output/xmppbot: output/libev.so
+  output/xmppbot: output/libxw.so
+  output/xmppbot: output/libxofactory.so
+  output/xmppbot: xmppbot/CMakeFiles/xmppbot.dir/build.make
+--- 81,88 ----
+diff -pr -x x_types.h .//CMakeFiles/xmppbot.dir/DependInfo.cmake ../tmp/xmppbot/CMakeFiles/xmppbot.dir/DependInfo.cmake
+*** .//CMakeFiles/xmppbot.dir/DependInfo.cmake	2012-05-30 02:37:42.265499631 +0400
+--- ../tmp/xmppbot/CMakeFiles/xmppbot.dir/DependInfo.cmake	2012-05-10 23:31:48.000000000 +0400
+*************** SET(CMAKE_C_COMPILER_ID "GNU")
+*** 10,16 ****
+  
+  # Targets to which this target links.
+  SET(CMAKE_TARGET_LINKED_INFO_FILES
+-   "/home/artemka/git/x/xwrcpt/xmppbot/3dparty/libev/CMakeFiles/ev.dir/DependInfo.cmake"
+    "/home/artemka/git/x/xwrcpt/xmppbot/xwlib/CMakeFiles/xw.dir/DependInfo.cmake"
+    "/home/artemka/git/x/xwrcpt/xmppbot/xwlib/CMakeFiles/xofactory.dir/DependInfo.cmake"
+    )
+--- 10,15 ----
+diff -pr -x x_types.h .//CMakeFiles/xmppbot.dir/link.txt ../tmp/xmppbot/CMakeFiles/xmppbot.dir/link.txt
+*** .//CMakeFiles/xmppbot.dir/link.txt	2012-05-30 02:37:42.255499631 +0400
+--- ../tmp/xmppbot/CMakeFiles/xmppbot.dir/link.txt	2012-05-10 23:31:48.000000000 +0400
+***************
+*** 1 ****
+! /usr/bin/gcc   -g -gdwarf-2 -DDEBUG   CMakeFiles/xmppbot.dir/main.c.o  -o ../output/xmppbot -rdynamic -L/home/artemka/git/x/xwrcpt/output -L/home/artemka/git/x/xwrcpt/xmppbot/3dparty/libev ../output/libev.so -lpthread ../output/libxw.so ../output/libxofactory.so ../output/libev.so -lpthread ../output/libxw.so ../output/libxofactory.so -ldl -lpthread -Wl,-rpath,/home/artemka/git/x/xwrcpt/output:/home/artemka/git/x/xwrcpt/xmppbot/3dparty/libev 
+--- 1 ----
+! /usr/bin/gcc   -g -gdwarf-2 -DDEBUG   CMakeFiles/xmppbot.dir/main.c.o  -o ../output/xmppbot -rdynamic -L/home/artemka/git/x/xwrcpt/output -L/home/artemka/git/x/xwrcpt/xmppbot/3dparty/libev -lev -lpthread ../output/libxw.so ../output/libxofactory.so -lev -lpthread ../output/libxw.so ../output/libxofactory.so -ldl -lpthread -Wl,-rpath,/home/artemka/git/x/xwrcpt/output:/home/artemka/git/x/xwrcpt/xmppbot/3dparty/libev 
+diff -pr -x x_types.h .//CMakeFiles/xparser.dir/C.includecache ../tmp/xmppbot/CMakeFiles/xparser.dir/C.includecache
+*** .//CMakeFiles/xparser.dir/C.includecache	2012-05-30 03:06:24.525499194 +0400
+--- ../tmp/xmppbot/CMakeFiles/xparser.dir/C.includecache	2012-05-18 02:35:40.000000000 +0400
+***************
+*** 6,15 ****
+  
+  #IncludeRegexTransform: 
+  
+- /home/artemka/git/x/xwrcpt/xmppbot/x_dll.c
+- xwlib/x_types.h
+- -
+- 
+  /home/artemka/git/x/xwrcpt/xmppbot/x_parser.c
+  stdio.h
+  -
+--- 6,11 ----
+diff -pr -x x_types.h .//config.h ../tmp/xmppbot/config.h
+*** .//config.h	2012-05-30 02:12:54.645500009 +0400
+--- ../tmp/xmppbot/config.h	2012-05-29 14:35:26.000000000 +0400
+***************
+*** 1,7 ****
+! #ifndef _BOTCONFIG_H_
+! #define _BOTCONFIG_H_
+! 
+! #define PLUGINS_DIR "/usr/local/lib/xmppbot/plugins"
+! 
+! #endif /* _CONTCONFIG_H_ */
+! 
+--- 1,7 ----
+! #ifndef _BOTCONFIG_H_
+! #define _BOTCONFIG_H_
+! 
+! #define PLUGINS_DIR "C:/Program Files/xmppbot/lib/xmppbot/plugins"
+! 
+! #endif /* _CONTCONFIG_H_ */
+! 
+Только в ./: CPackConfig.cmake
+Только в ./: CPackSourceConfig.cmake
+diff -pr -x x_types.h .//Makefile ../tmp/xmppbot/Makefile
+*** .//Makefile	2012-05-30 02:37:42.265499631 +0400
+--- ../tmp/xmppbot/Makefile	2012-05-25 03:41:48.000000000 +0400
+*************** depend:
+*** 170,189 ****
+  .PHONY : depend
+  
+  # Convenience name for target.
+- xmppbot/CMakeFiles/doc.dir/rule:
+- 	cd /home/artemka/git/x/xwrcpt && $(MAKE) -f CMakeFiles/Makefile2 xmppbot/CMakeFiles/doc.dir/rule
+- .PHONY : xmppbot/CMakeFiles/doc.dir/rule
+- 
+- # Convenience name for target.
+- doc: xmppbot/CMakeFiles/doc.dir/rule
+- .PHONY : doc
+- 
+- # fast build rule for target.
+- doc/fast:
+- 	cd /home/artemka/git/x/xwrcpt && $(MAKE) -f xmppbot/CMakeFiles/doc.dir/build.make xmppbot/CMakeFiles/doc.dir/build
+- .PHONY : doc/fast
+- 
+- # Convenience name for target.
+  xmppbot/CMakeFiles/xbus.dir/rule:
+  	cd /home/artemka/git/x/xwrcpt && $(MAKE) -f CMakeFiles/Makefile2 xmppbot/CMakeFiles/xbus.dir/rule
+  .PHONY : xmppbot/CMakeFiles/xbus.dir/rule
+--- 170,175 ----
+*************** help:
+*** 330,336 ****
+  	@echo "... all (the default if no target is provided)"
+  	@echo "... clean"
+  	@echo "... depend"
+- 	@echo "... doc"
+  	@echo "... edit_cache"
+  	@echo "... install"
+  	@echo "... install/local"
+--- 316,321 ----
+Только в ./: output
+diff -pr -x x_types.h .//plugins/audio/codec/speex/CMakeFiles/_x_speex.dir/C.includecache ../tmp/xmppbot/plugins/audio/codec/speex/CMakeFiles/_x_speex.dir/C.includecache
+*** .//plugins/audio/codec/speex/CMakeFiles/_x_speex.dir/C.includecache	2012-05-30 03:06:31.895499192 +0400
+--- ../tmp/xmppbot/plugins/audio/codec/speex/CMakeFiles/_x_speex.dir/C.includecache	2012-05-25 03:23:44.000000000 +0400
+*************** speex/speex.h
+*** 18,27 ****
+  alsa/asoundlib.h
+  -
+  
+- /home/artemka/git/x/xwrcpt/xmppbot/x_dll.c
+- xwlib/x_types.h
+- -
+- 
+  xmppbot/xwlib/x_config.h
+  x_config_android.h
+  xmppbot/xwlib/x_config_android.h
+--- 18,23 ----
+diff -pr -x x_types.h .//plugins/auth_plain/CMakeFiles/auth_plain.dir/C.includecache ../tmp/xmppbot/plugins/auth_plain/CMakeFiles/auth_plain.dir/C.includecache
+*** .//plugins/auth_plain/CMakeFiles/auth_plain.dir/C.includecache	2012-05-30 03:06:26.645499194 +0400
+--- ../tmp/xmppbot/plugins/auth_plain/CMakeFiles/auth_plain.dir/C.includecache	2012-05-18 02:35:42.000000000 +0400
+*************** xmppagent.h
+*** 24,33 ****
+  crypt/base64.h
+  -
+  
+- /home/artemka/git/x/xwrcpt/xmppbot/x_dll.c
+- xwlib/x_types.h
+- -
+- 
+  xmppbot/3dparty/libev/ev.h
+  signal.h
+  -
+--- 24,29 ----
+diff -pr -x x_types.h .//plugins/bind/bind.c ../tmp/xmppbot/plugins/bind/bind.c
+*** .//plugins/bind/bind.c	2012-05-30 03:40:42.955498672 +0400
+--- ../tmp/xmppbot/plugins/bind/bind.c	2012-05-10 22:54:04.000000000 +0400
+*************** bind_on_assign(x_object *this__, x_obj_a
+*** 50,56 ****
+    int val;
+    x_object *msg;
+    x_object *tmp;
+-   char *resname;
+    struct x_bus *bus = (struct x_bus *) this__->bus;
+    ENTER;
+  
+--- 50,55 ----
+*************** bind_on_assign(x_object *this__, x_obj_a
+*** 69,81 ****
+        x_object_setattr(msg, "xmlns", "urn:ietf:params:xml:ns:xmpp-bind");
+  
+        tmp = x_object_new("resource");
+! 
+!       resname = _ENV(this__,"resource");
+!       if (!resname)
+!         resname = "xmppbot";
+! 
+!       x_string_write(&tmp->content, resname, strlen(resname));
+! 
+        x_object_append_child(msg, tmp);
+  
+        tmp = x_object_new("iq");
+--- 68,74 ----
+        x_object_setattr(msg, "xmlns", "urn:ietf:params:xml:ns:xmpp-bind");
+  
+        tmp = x_object_new("resource");
+!       x_string_write(&tmp->content, "xmppbot", strlen("xmppbot"));
+        x_object_append_child(msg, tmp);
+  
+        tmp = x_object_new("iq");
+*************** bind_exit(x_object *this__)
+*** 104,111 ****
+    o = x_object_get_child(this__, "jid");
+    if (o)
+      {
+!       TRACE("New JID:=\"%s\"\n", o->content.cbuf);
+!       _ASET(X_OBJECT(bus), "jid", o->content.cbuf);
+        tmp = x_object_get_child(X_OBJECT(bus), "stream:stream");
+        if (tmp)
+          {
+--- 97,104 ----
+    o = x_object_get_child(this__, "jid");
+    if (o)
+      {
+!       TRACE("New JID:=\"%s\"\n",o->content.cbuf);
+!       _ASET(X_OBJECT(bus),"jid",o->content.cbuf);
+        tmp = x_object_get_child(X_OBJECT(bus), "stream:stream");
+        if (tmp)
+          {
+diff -pr -x x_types.h .//plugins/cmd_api/CMakeFiles/commands.dir/build.make ../tmp/xmppbot/plugins/cmd_api/CMakeFiles/commands.dir/build.make
+*** .//plugins/cmd_api/CMakeFiles/commands.dir/build.make	2012-05-30 02:37:42.725499631 +0400
+--- ../tmp/xmppbot/plugins/cmd_api/CMakeFiles/commands.dir/build.make	2012-05-10 23:31:48.000000000 +0400
+*************** output/libcommands.so: xmppbot/plugins/c
+*** 109,119 ****
+  output/libcommands.so: xmppbot/plugins/cmd_api/CMakeFiles/commands.dir/__/__/x_dll.c.o
+  output/libcommands.so: output/libxw++.so
+  output/libcommands.so: output/libev.so
+- output/libcommands.so: output/libsessions.so
+- output/libcommands.so: output/libev.so
+- output/libcommands.so: output/libxstun.so
+  output/libcommands.so: output/libxw.so
+- output/libcommands.so: output/libxwcrypt.so
+  output/libcommands.so: output/libxofactory.so
+  output/libcommands.so: xmppbot/plugins/cmd_api/CMakeFiles/commands.dir/build.make
+  output/libcommands.so: xmppbot/plugins/cmd_api/CMakeFiles/commands.dir/link.txt
+--- 109,115 ----
+diff -pr -x x_types.h .//plugins/cmd_api/CMakeFiles/commands.dir/C.includecache ../tmp/xmppbot/plugins/cmd_api/CMakeFiles/commands.dir/C.includecache
+*** .//plugins/cmd_api/CMakeFiles/commands.dir/C.includecache	2012-05-30 03:06:32.415499192 +0400
+--- ../tmp/xmppbot/plugins/cmd_api/CMakeFiles/commands.dir/C.includecache	2012-05-18 02:35:48.000000000 +0400
+***************
+*** 6,86 ****
+  
+  #IncludeRegexTransform: 
+  
+- /home/artemka/git/x/xwrcpt/xmppbot/x_dll.c
+- xwlib/x_types.h
+- -
+- 
+- xmppbot/xwlib/x_config.h
+- x_config_android.h
+- xmppbot/xwlib/x_config_android.h
+- x_config_ios.h
+- xmppbot/xwlib/x_config_ios.h
+- 
+- xmppbot/xwlib/x_config_ios.h
+- 
+- xmppbot/xwlib/x_types.h
+- x_config.h
+- xmppbot/xwlib/x_config.h
+- string.h
+- -
+- fcntl.h
+- -
+- stdlib.h
+- -
+- errno.h
+- -
+- stdio.h
+- -
+- sys/types.h
+- -
+- winsock2.h
+- -
+- ws2tcpip.h
+- -
+- windows.h
+- -
+- mswsock.h
+- -
+- io.h
+- -
+- share.h
+- -
+- memory.h
+- -
+- tchar.h
+- -
+- process.h
+- -
+- alloca.h
+- -
+- unistd.h
+- -
+- sys/socket.h
+- -
+- sys/un.h
+- -
+- netinet/in.h
+- -
+- arpa/inet.h
+- -
+- netdb.h
+- -
+- sys/syscall.h
+- -
+- strings.h
+- -
+- pthread.h
+- -
+- sys/uio.h
+- -
+- stdint.h
+- -
+- jni.h
+- -
+- string.h
+- -
+- android/log.h
+- -
+- stdio.h
+- -
+- 
+--- 6,8 ----
+diff -pr -x x_types.h .//plugins/cmd_api/CMakeFiles/commands.dir/CXX.includecache ../tmp/xmppbot/plugins/cmd_api/CMakeFiles/commands.dir/CXX.includecache
+*** .//plugins/cmd_api/CMakeFiles/commands.dir/CXX.includecache	2012-05-30 03:06:32.415499192 +0400
+--- ../tmp/xmppbot/plugins/cmd_api/CMakeFiles/commands.dir/CXX.includecache	2012-05-18 02:35:48.000000000 +0400
+*************** sys/stat.h
+*** 43,49 ****
+  -
+  
+  xmppbot/include/stun.h
+! xwlib/x_types.h
+  -
+  
+  xmppbot/plugins/sessions_api/sessions.h
+--- 43,51 ----
+  -
+  
+  xmppbot/include/stun.h
+! netinet/in.h
+! -
+! sys/types.h
+  -
+  
+  xmppbot/plugins/sessions_api/sessions.h
+diff -pr -x x_types.h .//plugins/cmd_api/CMakeFiles/commands.dir/DependInfo.cmake ../tmp/xmppbot/plugins/cmd_api/CMakeFiles/commands.dir/DependInfo.cmake
+*** .//plugins/cmd_api/CMakeFiles/commands.dir/DependInfo.cmake	2012-05-30 02:37:42.725499631 +0400
+--- ../tmp/xmppbot/plugins/cmd_api/CMakeFiles/commands.dir/DependInfo.cmake	2012-05-10 23:31:48.000000000 +0400
+*************** SET(CMAKE_CXX_COMPILER_ID "GNU")
+*** 17,25 ****
+  SET(CMAKE_TARGET_LINKED_INFO_FILES
+    "/home/artemka/git/x/xwrcpt/xmppbot/xwlib++/CMakeFiles/xw++.dir/DependInfo.cmake"
+    "/home/artemka/git/x/xwrcpt/xmppbot/3dparty/libev/CMakeFiles/ev.dir/DependInfo.cmake"
+-   "/home/artemka/git/x/xwrcpt/xmppbot/plugins/sessions_api/CMakeFiles/sessions.dir/DependInfo.cmake"
+-   "/home/artemka/git/x/xwrcpt/xmppbot/plugins/ice/CMakeFiles/xstun.dir/DependInfo.cmake"
+    "/home/artemka/git/x/xwrcpt/xmppbot/xwlib/CMakeFiles/xw.dir/DependInfo.cmake"
+-   "/home/artemka/git/x/xwrcpt/xmppbot/plugins/crypt/CMakeFiles/xwcrypt.dir/DependInfo.cmake"
+    "/home/artemka/git/x/xwrcpt/xmppbot/xwlib/CMakeFiles/xofactory.dir/DependInfo.cmake"
+    )
+--- 17,22 ----
+diff -pr -x x_types.h .//plugins/cmd_api/CMakeFiles/commands.dir/link.txt ../tmp/xmppbot/plugins/cmd_api/CMakeFiles/commands.dir/link.txt
+*** .//plugins/cmd_api/CMakeFiles/commands.dir/link.txt	2012-05-30 02:37:42.725499631 +0400
+--- ../tmp/xmppbot/plugins/cmd_api/CMakeFiles/commands.dir/link.txt	2012-05-10 23:31:48.000000000 +0400
+***************
+*** 1 ****
+! /usr/bin/c++  -fPIC  -Wall  -g -gdwarf-2 -O2 -DPIC -fPIC -I./  -shared -Wl,-soname,libcommands.so -o ../../../output/libcommands.so CMakeFiles/commands.dir/cmdapi.cpp.o CMakeFiles/commands.dir/__/__/x_dll.c.o ../../../output/libxw++.so ../../../output/libev.so ../../../output/libsessions.so -lstdc++ ../../../output/libev.so ../../../output/libxstun.so ../../../output/libxw.so ../../../output/libxwcrypt.so ../../../output/libxofactory.so -lpthread -Wl,-rpath,/home/artemka/git/x/xwrcpt/output: 
+--- 1 ----
+! /usr/bin/c++  -fPIC  -Wall  -g -gdwarf-2 -O2 -DPIC -fPIC -I./  -shared -Wl,-soname,libcommands.so -o ../../../output/libcommands.so CMakeFiles/commands.dir/cmdapi.cpp.o CMakeFiles/commands.dir/__/__/x_dll.c.o ../../../output/libxw++.so ../../../output/libev.so ../../../output/libxw.so ../../../output/libxofactory.so -lpthread -lstdc++ -Wl,-rpath,/home/artemka/git/x/xwrcpt/output: 
+diff -pr -x x_types.h .//plugins/cmd_api/CMakeFiles/progress.marks ../tmp/xmppbot/plugins/cmd_api/CMakeFiles/progress.marks
+*** .//plugins/cmd_api/CMakeFiles/progress.marks	2012-05-30 02:57:00.455499337 +0400
+--- ../tmp/xmppbot/plugins/cmd_api/CMakeFiles/progress.marks	2012-05-25 03:42:08.000000000 +0400
+***************
+*** 1 ****
+! 21
+--- 1 ----
+! 10
+diff -pr -x x_types.h .//plugins/core/CMakeFiles/features.dir/C.includecache ../tmp/xmppbot/plugins/core/CMakeFiles/features.dir/C.includecache
+*** .//plugins/core/CMakeFiles/features.dir/C.includecache	2012-05-30 03:06:28.485499193 +0400
+--- ../tmp/xmppbot/plugins/core/CMakeFiles/features.dir/C.includecache	2012-05-18 02:35:44.000000000 +0400
+*************** xwlib/x_utils.h
+*** 20,29 ****
+  xmppagent.h
+  -
+  
+- /home/artemka/git/x/xwrcpt/xmppbot/x_dll.c
+- xwlib/x_types.h
+- -
+- 
+  xmppbot/3dparty/libev/ev.h
+  signal.h
+  -
+--- 20,25 ----
+diff -pr -x x_types.h .//plugins/core/CMakeFiles/iq.dir/C.includecache ../tmp/xmppbot/plugins/core/CMakeFiles/iq.dir/C.includecache
+*** .//plugins/core/CMakeFiles/iq.dir/C.includecache	2012-05-30 03:06:28.825499193 +0400
+--- ../tmp/xmppbot/plugins/core/CMakeFiles/iq.dir/C.includecache	2012-05-18 02:35:44.000000000 +0400
+*************** xwlib/x_obj.h
+*** 22,31 ****
+  xmppagent.h
+  -
+  
+- /home/artemka/git/x/xwrcpt/xmppbot/x_dll.c
+- xwlib/x_types.h
+- -
+- 
+  xmppbot/3dparty/libev/ev.h
+  signal.h
+  -
+--- 22,27 ----
+diff -pr -x x_types.h .//plugins/core/CMakeFiles/message.dir/build.make ../tmp/xmppbot/plugins/core/CMakeFiles/message.dir/build.make
+*** .//plugins/core/CMakeFiles/message.dir/build.make	2012-05-30 02:37:42.295499631 +0400
+--- ../tmp/xmppbot/plugins/core/CMakeFiles/message.dir/build.make	2012-05-10 23:31:48.000000000 +0400
+*************** output/libmessage.so: xmppbot/plugins/co
+*** 110,117 ****
+  output/libmessage.so: output/libxw.so
+  output/libmessage.so: output/libxofactory.so
+  output/libmessage.so: output/libsessions.so
+- output/libmessage.so: output/libxstun.so
+  output/libmessage.so: output/libxw.so
+  output/libmessage.so: output/libxwcrypt.so
+  output/libmessage.so: output/libxofactory.so
+  output/libmessage.so: output/libev.so
+--- 110,117 ----
+  output/libmessage.so: output/libxw.so
+  output/libmessage.so: output/libxofactory.so
+  output/libmessage.so: output/libsessions.so
+  output/libmessage.so: output/libxw.so
++ output/libmessage.so: output/libxstun.so
+  output/libmessage.so: output/libxwcrypt.so
+  output/libmessage.so: output/libxofactory.so
+  output/libmessage.so: output/libev.so
+diff -pr -x x_types.h .//plugins/core/CMakeFiles/message.dir/C.includecache ../tmp/xmppbot/plugins/core/CMakeFiles/message.dir/C.includecache
+*** .//plugins/core/CMakeFiles/message.dir/C.includecache	2012-05-30 03:06:29.085499193 +0400
+--- ../tmp/xmppbot/plugins/core/CMakeFiles/message.dir/C.includecache	2012-05-18 02:35:46.000000000 +0400
+*************** xmppagent.h
+*** 16,25 ****
+  plugins/sessions_api/sessions.h
+  -
+  
+- /home/artemka/git/x/xwrcpt/xmppbot/x_dll.c
+- xwlib/x_types.h
+- -
+- 
+  xmppbot/3dparty/libev/ev.h
+  signal.h
+  -
+--- 16,21 ----
+*************** sys/stat.h
+*** 33,39 ****
+  -
+  
+  xmppbot/include/stun.h
+! xwlib/x_types.h
+  -
+  
+  xmppbot/include/x_parser.h
+--- 29,37 ----
+  -
+  
+  xmppbot/include/stun.h
+! netinet/in.h
+! -
+! sys/types.h
+  -
+  
+  xmppbot/include/x_parser.h
+diff -pr -x x_types.h .//plugins/core/CMakeFiles/message.dir/link.txt ../tmp/xmppbot/plugins/core/CMakeFiles/message.dir/link.txt
+*** .//plugins/core/CMakeFiles/message.dir/link.txt	2012-05-30 02:37:42.295499631 +0400
+--- ../tmp/xmppbot/plugins/core/CMakeFiles/message.dir/link.txt	2012-05-10 23:31:48.000000000 +0400
+***************
+*** 1 ****
+! /usr/bin/gcc  -fPIC  -g -gdwarf-2 -DDEBUG -Wall  -g -gdwarf-2 -O2 -DPIC -fPIC -I./ -g -gdwarf-2 -DDEBUG  -shared -Wl,-soname,libmessage.so -o ../../../output/libmessage.so CMakeFiles/message.dir/message.c.o CMakeFiles/message.dir/__/__/x_dll.c.o -L/home/artemka/git/x/xwrcpt/output -L/home/artemka/git/x/xwrcpt/xmppbot/3dparty/openssl ../../../output/libxw.so ../../../output/libxofactory.so ../../../output/libsessions.so ../../../output/libxstun.so ../../../output/libxw.so ../../../output/libxwcrypt.so ../../../output/libxofactory.so -lpthread ../../../output/libev.so -Wl,-rpath,/home/artemka/git/x/xwrcpt/output:/home/artemka/git/x/xwrcpt/xmppbot/3dparty/openssl 
+--- 1 ----
+! /usr/bin/gcc  -fPIC  -g -gdwarf-2 -DDEBUG -Wall  -g -gdwarf-2 -O2 -DPIC -fPIC -I./ -g -gdwarf-2 -DDEBUG  -shared -Wl,-soname,libmessage.so -o ../../../output/libmessage.so CMakeFiles/message.dir/message.c.o CMakeFiles/message.dir/__/__/x_dll.c.o -L/home/artemka/git/x/xwrcpt/output -L/home/artemka/git/x/xwrcpt/xmppbot/3dparty/openssl ../../../output/libxw.so ../../../output/libxofactory.so ../../../output/libsessions.so ../../../output/libxw.so ../../../output/libxstun.so ../../../output/libxwcrypt.so ../../../output/libxofactory.so -lpthread ../../../output/libev.so -Wl,-rpath,/home/artemka/git/x/xwrcpt/output:/home/artemka/git/x/xwrcpt/xmppbot/3dparty/openssl 
+diff -pr -x x_types.h .//plugins/core/CMakeFiles/presence.dir/C.includecache ../tmp/xmppbot/plugins/core/CMakeFiles/presence.dir/C.includecache
+*** .//plugins/core/CMakeFiles/presence.dir/C.includecache	2012-05-30 03:06:29.405499193 +0400
+--- ../tmp/xmppbot/plugins/core/CMakeFiles/presence.dir/C.includecache	2012-05-18 02:35:46.000000000 +0400
+*************** ev.h
+*** 18,27 ****
+  xmppagent.h
+  -
+  
+- /home/artemka/git/x/xwrcpt/xmppbot/x_dll.c
+- xwlib/x_types.h
+- -
+- 
+  xmppbot/3dparty/libev/ev.h
+  signal.h
+  -
+--- 18,23 ----
+diff -pr -x x_types.h .//plugins/core/CMakeFiles/sasl.dir/C.includecache ../tmp/xmppbot/plugins/core/CMakeFiles/sasl.dir/C.includecache
+*** .//plugins/core/CMakeFiles/sasl.dir/C.includecache	2012-05-30 03:06:29.685499193 +0400
+--- ../tmp/xmppbot/plugins/core/CMakeFiles/sasl.dir/C.includecache	2012-05-18 02:35:46.000000000 +0400
+*************** xwlib/x_types.h
+*** 12,21 ****
+  xmppagent.h
+  -
+  
+- /home/artemka/git/x/xwrcpt/xmppbot/x_dll.c
+- xwlib/x_types.h
+- -
+- 
+  xmppbot/3dparty/libev/ev.h
+  signal.h
+  -
+--- 12,17 ----
+diff -pr -x x_types.h .//plugins/core/CMakeFiles/stream.dir/C.includecache ../tmp/xmppbot/plugins/core/CMakeFiles/stream.dir/C.includecache
+*** .//plugins/core/CMakeFiles/stream.dir/C.includecache	2012-05-30 03:06:30.095499193 +0400
+--- ../tmp/xmppbot/plugins/core/CMakeFiles/stream.dir/C.includecache	2012-05-18 02:35:46.000000000 +0400
+*************** xwlib/x_types.h
+*** 12,21 ****
+  xmppagent.h
+  -
+  
+- /home/artemka/git/x/xwrcpt/xmppbot/x_dll.c
+- xwlib/x_types.h
+- -
+- 
+  xmppbot/3dparty/libev/ev.h
+  signal.h
+  -
+--- 12,17 ----
+diff -pr -x x_types.h .//plugins/disco/CMakeFiles/discovery.dir/C.includecache ../tmp/xmppbot/plugins/disco/CMakeFiles/discovery.dir/C.includecache
+*** .//plugins/disco/CMakeFiles/discovery.dir/C.includecache	2012-05-30 03:06:27.425499193 +0400
+--- ../tmp/xmppbot/plugins/disco/CMakeFiles/discovery.dir/C.includecache	2012-05-18 02:35:42.000000000 +0400
+*************** xwlib/x_utils.h
+*** 22,31 ****
+  xmppagent.h
+  -
+  
+- /home/artemka/git/x/xwrcpt/xmppbot/x_dll.c
+- xwlib/x_types.h
+- -
+- 
+  xmppbot/3dparty/libev/ev.h
+  signal.h
+  -
+--- 22,27 ----
+diff -pr -x x_types.h .//plugins/eventdomains/CMakeFiles/evtdomain.dir/C.includecache ../tmp/xmppbot/plugins/eventdomains/CMakeFiles/evtdomain.dir/C.includecache
+*** .//plugins/eventdomains/CMakeFiles/evtdomain.dir/C.includecache	2012-05-30 03:06:34.005499192 +0400
+--- ../tmp/xmppbot/plugins/eventdomains/CMakeFiles/evtdomain.dir/C.includecache	2012-05-18 02:35:50.000000000 +0400
+*************** xwlib/x_obj.h
+*** 16,25 ****
+  ev.h
+  -
+  
+- /home/artemka/git/x/xwrcpt/xmppbot/x_dll.c
+- xwlib/x_types.h
+- -
+- 
+  xmppbot/3dparty/libev/ev.h
+  signal.h
+  -
+--- 16,21 ----
+diff -pr -x x_types.h .//plugins/ice/CMakeFiles/progress.marks ../tmp/xmppbot/plugins/ice/CMakeFiles/progress.marks
+*** .//plugins/ice/CMakeFiles/progress.marks	2012-05-30 02:57:00.455499337 +0400
+--- ../tmp/xmppbot/plugins/ice/CMakeFiles/progress.marks	2012-05-25 03:42:08.000000000 +0400
+***************
+*** 1 ****
+! 14
+--- 1 ----
+! 11
+diff -pr -x x_types.h .//plugins/ice/CMakeFiles/xstun.dir/build.make ../tmp/xmppbot/plugins/ice/CMakeFiles/xstun.dir/build.make
+*** .//plugins/ice/CMakeFiles/xstun.dir/build.make	2012-05-30 02:37:42.405499631 +0400
+--- ../tmp/xmppbot/plugins/ice/CMakeFiles/xstun.dir/build.make	2012-05-10 23:31:48.000000000 +0400
+*************** output/libxstun.so: xmppbot/plugins/ice/
+*** 134,140 ****
+  output/libxstun.so: xmppbot/plugins/ice/CMakeFiles/xstun.dir/x_stun_server.c.o
+  output/libxstun.so: xmppbot/plugins/ice/CMakeFiles/xstun.dir/__/__/x_dll.c.o
+  output/libxstun.so: output/libxwcrypt.so
+- output/libxstun.so: output/libxw.so
+  output/libxstun.so: output/libxofactory.so
+  output/libxstun.so: xmppbot/plugins/ice/CMakeFiles/xstun.dir/build.make
+  output/libxstun.so: xmppbot/plugins/ice/CMakeFiles/xstun.dir/link.txt
+--- 134,139 ----
+diff -pr -x x_types.h .//plugins/ice/CMakeFiles/xstun.dir/C.includecache ../tmp/xmppbot/plugins/ice/CMakeFiles/xstun.dir/C.includecache
+*** .//plugins/ice/CMakeFiles/xstun.dir/C.includecache	2012-05-30 03:06:21.125499195 +0400
+--- ../tmp/xmppbot/plugins/ice/CMakeFiles/xstun.dir/C.includecache	2012-05-18 02:35:44.000000000 +0400
+*************** xwlib/x_utils.h
+*** 38,47 ****
+  x_stun.h
+  /home/artemka/git/x/xwrcpt/xmppbot/plugins/ice/x_stun.h
+  
+- /home/artemka/git/x/xwrcpt/xmppbot/x_dll.c
+- xwlib/x_types.h
+- -
+- 
+  xmppbot/include/crypt/crc32.h
+  
+  xmppbot/include/crypt/md5.h
+--- 38,43 ----
+diff -pr -x x_types.h .//plugins/ice/CMakeFiles/xstun.dir/DependInfo.cmake ../tmp/xmppbot/plugins/ice/CMakeFiles/xstun.dir/DependInfo.cmake
+*** .//plugins/ice/CMakeFiles/xstun.dir/DependInfo.cmake	2012-05-30 02:37:42.405499631 +0400
+--- ../tmp/xmppbot/plugins/ice/CMakeFiles/xstun.dir/DependInfo.cmake	2012-05-10 23:31:48.000000000 +0400
+*************** SET(CMAKE_C_COMPILER_ID "GNU")
+*** 13,18 ****
+  # Targets to which this target links.
+  SET(CMAKE_TARGET_LINKED_INFO_FILES
+    "/home/artemka/git/x/xwrcpt/xmppbot/plugins/crypt/CMakeFiles/xwcrypt.dir/DependInfo.cmake"
+-   "/home/artemka/git/x/xwrcpt/xmppbot/xwlib/CMakeFiles/xw.dir/DependInfo.cmake"
+    "/home/artemka/git/x/xwrcpt/xmppbot/xwlib/CMakeFiles/xofactory.dir/DependInfo.cmake"
+    )
+--- 13,17 ----
+diff -pr -x x_types.h .//plugins/ice/CMakeFiles/xstun.dir/link.txt ../tmp/xmppbot/plugins/ice/CMakeFiles/xstun.dir/link.txt
+*** .//plugins/ice/CMakeFiles/xstun.dir/link.txt	2012-05-30 02:37:42.405499631 +0400
+--- ../tmp/xmppbot/plugins/ice/CMakeFiles/xstun.dir/link.txt	2012-05-10 23:31:48.000000000 +0400
+***************
+*** 1 ****
+! /usr/bin/gcc  -fPIC  -g -gdwarf-2 -DDEBUG -Wall -O2 -I./ -g -gdwarf-2 -DDEBUG  -shared -Wl,-soname,libxstun.so -o ../../../output/libxstun.so CMakeFiles/xstun.dir/x_stun.c.o CMakeFiles/xstun.dir/x_stun_server.c.o CMakeFiles/xstun.dir/__/__/x_dll.c.o ../../../output/libxwcrypt.so ../../../output/libxw.so ../../../output/libxofactory.so -lpthread -Wl,-rpath,/home/artemka/git/x/xwrcpt/output: 
+--- 1 ----
+! /usr/bin/gcc  -fPIC  -g -gdwarf-2 -DDEBUG -Wall -O2 -I./ -g -gdwarf-2 -DDEBUG  -shared -Wl,-soname,libxstun.so -o ../../../output/libxstun.so CMakeFiles/xstun.dir/x_stun.c.o CMakeFiles/xstun.dir/x_stun_server.c.o CMakeFiles/xstun.dir/__/__/x_dll.c.o ../../../output/libxwcrypt.so ../../../output/libxofactory.so -lpthread -Wl,-rpath,/home/artemka/git/x/xwrcpt/output: 
+diff -pr -x x_types.h .//plugins/jingle/CMakeFiles/jingle.dir/build.make ../tmp/xmppbot/plugins/jingle/CMakeFiles/jingle.dir/build.make
+*** .//plugins/jingle/CMakeFiles/jingle.dir/build.make	2012-05-30 02:37:42.845499631 +0400
+--- ../tmp/xmppbot/plugins/jingle/CMakeFiles/jingle.dir/build.make	2012-05-10 23:31:48.000000000 +0400
+*************** output/libjingle.so: xmppbot/plugins/jin
+*** 188,195 ****
+  output/libjingle.so: output/libxw.so
+  output/libjingle.so: output/libxofactory.so
+  output/libjingle.so: output/libsessions.so
+- output/libjingle.so: output/libxstun.so
+  output/libjingle.so: output/libxw.so
+  output/libjingle.so: output/libxwcrypt.so
+  output/libjingle.so: output/libxofactory.so
+  output/libjingle.so: output/libev.so
+--- 188,195 ----
+  output/libjingle.so: output/libxw.so
+  output/libjingle.so: output/libxofactory.so
+  output/libjingle.so: output/libsessions.so
+  output/libjingle.so: output/libxw.so
++ output/libjingle.so: output/libxstun.so
+  output/libjingle.so: output/libxwcrypt.so
+  output/libjingle.so: output/libxofactory.so
+  output/libjingle.so: output/libev.so
+diff -pr -x x_types.h .//plugins/jingle/CMakeFiles/jingle.dir/C.includecache ../tmp/xmppbot/plugins/jingle/CMakeFiles/jingle.dir/C.includecache
+*** .//plugins/jingle/CMakeFiles/jingle.dir/C.includecache	2012-05-30 03:06:32.895499192 +0400
+--- ../tmp/xmppbot/plugins/jingle/CMakeFiles/jingle.dir/C.includecache	2012-05-18 02:35:48.000000000 +0400
+*************** xwlib/x_utils.h
+*** 52,61 ****
+  plugins/sessions_api/sessions.h
+  -
+  
+- /home/artemka/git/x/xwrcpt/xmppbot/x_dll.c
+- xwlib/x_types.h
+- -
+- 
+  xmppbot/3dparty/libev/ev.h
+  signal.h
+  -
+--- 52,57 ----
+*************** sys/stat.h
+*** 69,75 ****
+  -
+  
+  xmppbot/include/stun.h
+! xwlib/x_types.h
+  -
+  
+  xmppbot/plugins/sessions_api/sessions.h
+--- 65,73 ----
+  -
+  
+  xmppbot/include/stun.h
+! netinet/in.h
+! -
+! sys/types.h
+  -
+  
+  xmppbot/plugins/sessions_api/sessions.h
+diff -pr -x x_types.h .//plugins/jingle/CMakeFiles/jingle.dir/link.txt ../tmp/xmppbot/plugins/jingle/CMakeFiles/jingle.dir/link.txt
+*** .//plugins/jingle/CMakeFiles/jingle.dir/link.txt	2012-05-30 02:37:42.845499631 +0400
+--- ../tmp/xmppbot/plugins/jingle/CMakeFiles/jingle.dir/link.txt	2012-05-10 23:31:48.000000000 +0400
+***************
+*** 1 ****
+! /usr/bin/gcc  -fPIC  -g -gdwarf-2 -DDEBUG -Wall  -g -gdwarf-2 -O2 -DPIC -fPIC -I./ -g -gdwarf-2 -DDEBUG  -shared -Wl,-soname,libjingle.so -o ../../../output/libjingle.so CMakeFiles/jingle.dir/xep_0166.c.o CMakeFiles/jingle.dir/jingle_transport.c.o CMakeFiles/jingle.dir/jingle_description.c.o CMakeFiles/jingle.dir/speex.c.o CMakeFiles/jingle.dir/__/__/x_dll.c.o ../../../output/libxw.so ../../../output/libxofactory.so ../../../output/libsessions.so ../../../output/libxstun.so ../../../output/libxw.so ../../../output/libxwcrypt.so ../../../output/libxofactory.so -lpthread ../../../output/libev.so -Wl,-rpath,/home/artemka/git/x/xwrcpt/output: 
+--- 1 ----
+! /usr/bin/gcc  -fPIC  -g -gdwarf-2 -DDEBUG -Wall  -g -gdwarf-2 -O2 -DPIC -fPIC -I./ -g -gdwarf-2 -DDEBUG  -shared -Wl,-soname,libjingle.so -o ../../../output/libjingle.so CMakeFiles/jingle.dir/xep_0166.c.o CMakeFiles/jingle.dir/jingle_transport.c.o CMakeFiles/jingle.dir/jingle_description.c.o CMakeFiles/jingle.dir/speex.c.o CMakeFiles/jingle.dir/__/__/x_dll.c.o ../../../output/libxw.so ../../../output/libxofactory.so ../../../output/libsessions.so ../../../output/libxw.so ../../../output/libxstun.so ../../../output/libxwcrypt.so ../../../output/libxofactory.so -lpthread ../../../output/libev.so -Wl,-rpath,/home/artemka/git/x/xwrcpt/output: 
+diff -pr -x x_types.h .//plugins/public_api/CMakeFiles/pubapi.dir/C.includecache ../tmp/xmppbot/plugins/public_api/CMakeFiles/pubapi.dir/C.includecache
+*** .//plugins/public_api/CMakeFiles/pubapi.dir/C.includecache	2012-05-30 03:06:33.695499192 +0400
+--- ../tmp/xmppbot/plugins/public_api/CMakeFiles/pubapi.dir/C.includecache	2012-05-18 02:35:50.000000000 +0400
+*************** xwlib/x_types.h
+*** 12,21 ****
+  xwlib/x_obj.h
+  -
+  
+- /home/artemka/git/x/xwrcpt/xmppbot/x_dll.c
+- xwlib/x_types.h
+- -
+- 
+  xmppbot/xwlib/x_config.h
+  x_config_android.h
+  xmppbot/xwlib/x_config_android.h
+--- 12,17 ----
+diff -pr -x x_types.h .//plugins/sessions_api/CMakeFiles/sessions.dir/C.includecache ../tmp/xmppbot/plugins/sessions_api/CMakeFiles/sessions.dir/C.includecache
+*** .//plugins/sessions_api/CMakeFiles/sessions.dir/C.includecache	2012-05-30 03:06:21.755499195 +0400
+--- ../tmp/xmppbot/plugins/sessions_api/CMakeFiles/sessions.dir/C.includecache	2012-05-18 02:35:44.000000000 +0400
+*************** xwlib/x_utils.h
+*** 70,79 ****
+  stun.h
+  -
+  
+- /home/artemka/git/x/xwrcpt/xmppbot/x_dll.c
+- xwlib/x_types.h
+- -
+- 
+  xmppbot/3dparty/libev/ev.h
+  signal.h
+  -
+--- 70,75 ----
+*************** sys/stat.h
+*** 87,97 ****
+  -
+  
+  xmppbot/include/rtp.h
+! xwlib/x_types.h
+  -
+  
+  xmppbot/include/stun.h
+! xwlib/x_types.h
+  -
+  
+  xmppbot/include/x_parser.h
+--- 83,97 ----
+  -
+  
+  xmppbot/include/rtp.h
+! pthread.h
+! -
+! xmppagent.h
+  -
+  
+  xmppbot/include/stun.h
+! netinet/in.h
+! -
+! sys/types.h
+  -
+  
+  xmppbot/include/x_parser.h
+diff -pr -x x_types.h .//plugins/sessions_api/CMakeFiles/sessions.dir/depend.internal ../tmp/xmppbot/plugins/sessions_api/CMakeFiles/sessions.dir/depend.internal
+*** .//plugins/sessions_api/CMakeFiles/sessions.dir/depend.internal	2012-05-30 03:06:21.755499195 +0400
+--- ../tmp/xmppbot/plugins/sessions_api/CMakeFiles/sessions.dir/depend.internal	2012-05-18 02:35:44.000000000 +0400
+*************** xmppbot/plugins/sessions_api/CMakeFiles/
+*** 22,27 ****
+--- 22,29 ----
+   xmppbot/3dparty/libev/ev.h
+   xmppbot/include/rtp.h
+   xmppbot/include/stun.h
++  xmppbot/include/x_parser.h
++  xmppbot/include/xmppagent.h
+   xmppbot/xwlib/x_config.h
+   xmppbot/xwlib/x_config_ios.h
+   xmppbot/xwlib/x_lib.h
+diff -pr -x x_types.h .//plugins/sessions_api/CMakeFiles/sessions.dir/depend.make ../tmp/xmppbot/plugins/sessions_api/CMakeFiles/sessions.dir/depend.make
+*** .//plugins/sessions_api/CMakeFiles/sessions.dir/depend.make	2012-05-30 03:06:21.755499195 +0400
+--- ../tmp/xmppbot/plugins/sessions_api/CMakeFiles/sessions.dir/depend.make	2012-05-18 02:35:44.000000000 +0400
+*************** xmppbot/plugins/sessions_api/CMakeFiles/
+*** 21,26 ****
+--- 21,28 ----
+  xmppbot/plugins/sessions_api/CMakeFiles/sessions.dir/ice_ctl.c.o: xmppbot/3dparty/libev/ev.h
+  xmppbot/plugins/sessions_api/CMakeFiles/sessions.dir/ice_ctl.c.o: xmppbot/include/rtp.h
+  xmppbot/plugins/sessions_api/CMakeFiles/sessions.dir/ice_ctl.c.o: xmppbot/include/stun.h
++ xmppbot/plugins/sessions_api/CMakeFiles/sessions.dir/ice_ctl.c.o: xmppbot/include/x_parser.h
++ xmppbot/plugins/sessions_api/CMakeFiles/sessions.dir/ice_ctl.c.o: xmppbot/include/xmppagent.h
+  xmppbot/plugins/sessions_api/CMakeFiles/sessions.dir/ice_ctl.c.o: xmppbot/xwlib/x_config.h
+  xmppbot/plugins/sessions_api/CMakeFiles/sessions.dir/ice_ctl.c.o: xmppbot/xwlib/x_config_ios.h
+  xmppbot/plugins/sessions_api/CMakeFiles/sessions.dir/ice_ctl.c.o: xmppbot/xwlib/x_lib.h
+diff -pr -x x_types.h .//plugins/sessions_api/CMakeFiles/session_tester.dir/C.includecache ../tmp/xmppbot/plugins/sessions_api/CMakeFiles/session_tester.dir/C.includecache
+*** .//plugins/sessions_api/CMakeFiles/session_tester.dir/C.includecache	2012-05-30 03:06:30.385499193 +0400
+--- ../tmp/xmppbot/plugins/sessions_api/CMakeFiles/session_tester.dir/C.includecache	2012-05-11 00:07:10.000000000 +0400
+***************
+*** 7,104 ****
+  #IncludeRegexTransform: 
+  
+  /home/artemka/git/x/xwrcpt/xmppbot/plugins/sessions_api/session_tester.c
+- xwlib/x_types.h
+- -
+- xwlib/x_lib.h
+- -
+- 
+- xmppbot/xwlib/x_config.h
+- x_config_android.h
+- xmppbot/xwlib/x_config_android.h
+- x_config_ios.h
+- xmppbot/xwlib/x_config_ios.h
+- 
+- xmppbot/xwlib/x_config_ios.h
+- 
+- xmppbot/xwlib/x_lib.h
+- x_types.h
+- xmppbot/xwlib/x_types.h
+- stdlib.h
+- -
+  stdio.h
+  -
+- x_config.h
+- xmppbot/xwlib/x_config.h
+- direct.h
+- -
+- malloc.h
+- -
+- sys/stat.h
+- -
+- 
+- xmppbot/xwlib/x_types.h
+- x_config.h
+- xmppbot/xwlib/x_config.h
+  string.h
+  -
+! fcntl.h
+  -
+  stdlib.h
+  -
+  errno.h
+  -
+! stdio.h
+! -
+! sys/types.h
+! -
+! winsock2.h
+! -
+! ws2tcpip.h
+! -
+! windows.h
+! -
+! mswsock.h
+! -
+! io.h
+! -
+! share.h
+! -
+! memory.h
+! -
+! tchar.h
+! -
+! process.h
+! -
+! alloca.h
+  -
+  unistd.h
+  -
+  sys/socket.h
+  -
+  sys/un.h
+  -
+  netinet/in.h
+  -
+- arpa/inet.h
+- -
+- netdb.h
+- -
+- sys/syscall.h
+- -
+- strings.h
+- -
+- pthread.h
+- -
+- sys/uio.h
+- -
+- stdint.h
+- -
+- jni.h
+- -
+- string.h
+- -
+- android/log.h
+- -
+- stdio.h
+- -
+  
+--- 7,32 ----
+  #IncludeRegexTransform: 
+  
+  /home/artemka/git/x/xwrcpt/xmppbot/plugins/sessions_api/session_tester.c
+  stdio.h
+  -
+  string.h
+  -
+! strings.h
+  -
+  stdlib.h
+  -
+  errno.h
+  -
+! fcntl.h
+  -
+  unistd.h
+  -
++ sys/types.h
++ -
+  sys/socket.h
+  -
+  sys/un.h
+  -
+  netinet/in.h
+  -
+  
+diff -pr -x x_types.h .//plugins/sessions_api/CMakeFiles/session_tester.dir/depend.internal ../tmp/xmppbot/plugins/sessions_api/CMakeFiles/session_tester.dir/depend.internal
+*** .//plugins/sessions_api/CMakeFiles/session_tester.dir/depend.internal	2012-05-30 03:06:30.385499193 +0400
+--- ../tmp/xmppbot/plugins/sessions_api/CMakeFiles/session_tester.dir/depend.internal	2012-05-11 00:07:10.000000000 +0400
+***************
+*** 3,9 ****
+  
+  xmppbot/plugins/sessions_api/CMakeFiles/session_tester.dir/session_tester.c.o
+   /home/artemka/git/x/xwrcpt/xmppbot/plugins/sessions_api/session_tester.c
+-  xmppbot/xwlib/x_config.h
+-  xmppbot/xwlib/x_config_ios.h
+-  xmppbot/xwlib/x_lib.h
+-  xmppbot/xwlib/x_types.h
+--- 3,5 ----
+diff -pr -x x_types.h .//plugins/sessions_api/CMakeFiles/session_tester.dir/depend.make ../tmp/xmppbot/plugins/sessions_api/CMakeFiles/session_tester.dir/depend.make
+*** .//plugins/sessions_api/CMakeFiles/session_tester.dir/depend.make	2012-05-30 03:06:30.385499193 +0400
+--- ../tmp/xmppbot/plugins/sessions_api/CMakeFiles/session_tester.dir/depend.make	2012-05-11 00:07:10.000000000 +0400
+***************
+*** 2,9 ****
+  # Generated by "Unix Makefiles" Generator, CMake Version 2.8
+  
+  xmppbot/plugins/sessions_api/CMakeFiles/session_tester.dir/session_tester.c.o: xmppbot/plugins/sessions_api/session_tester.c
+- xmppbot/plugins/sessions_api/CMakeFiles/session_tester.dir/session_tester.c.o: xmppbot/xwlib/x_config.h
+- xmppbot/plugins/sessions_api/CMakeFiles/session_tester.dir/session_tester.c.o: xmppbot/xwlib/x_config_ios.h
+- xmppbot/plugins/sessions_api/CMakeFiles/session_tester.dir/session_tester.c.o: xmppbot/xwlib/x_lib.h
+- xmppbot/plugins/sessions_api/CMakeFiles/session_tester.dir/session_tester.c.o: xmppbot/xwlib/x_types.h
+  
+--- 2,5 ----
+diff -pr -x x_types.h .//plugins/sessions_api/ice_ctl.c ../tmp/xmppbot/plugins/sessions_api/ice_ctl.c
+*** .//plugins/sessions_api/ice_ctl.c	2012-05-30 02:11:58.625500023 +0400
+--- ../tmp/xmppbot/plugins/sessions_api/ice_ctl.c	2012-05-30 14:56:48.000000000 +0400
+*************** __icestun_xobj_to_sockaddr_in(x_object *
+*** 251,257 ****
+      {
+        addr->sin_family = AF_INET;
+        addr->sin_port = htons(atoi(portnum));
+!       res = !inet_aton(ipaddr, &addr->sin_addr);
+      }
+  
+    return res;
+--- 251,257 ----
+      {
+        addr->sin_family = AF_INET;
+        addr->sin_port = htons(atoi(portnum));
+!       res = !x_inet_aton(ipaddr, &addr->sin_addr);
+      }
+  
+    return res;
+diff -pr -x x_types.h .//plugins/video/codec/xtheora/libogg-1.1.4/config.h ../tmp/xmppbot/plugins/video/codec/xtheora/libogg-1.1.4/config.h
+*** .//plugins/video/codec/xtheora/libogg-1.1.4/config.h	2012-05-30 02:20:26.705499894 +0400
+--- ../tmp/xmppbot/plugins/video/codec/xtheora/libogg-1.1.4/config.h	2012-05-29 14:38:00.000000000 +0400
+***************
+*** 1,40 ****
+! /* #undef HAVE_CLOCK_GETTIME */
+! /* #undef HAVE_CLOCK_SYSCALL */
+! #define HAVE_DLFCN_H 1
+! #define HAVE_EPOLL_CTL 1
+! #define HAVE_EVENTFD 1
+! /* #undef HAVE_FLOOR */
+! #define HAVE_INOTIFY_INIT 1
+! #define HAVE_INTTYPES_H 1
+! /* #undef HAVE_KQUEUE */
+! /* #undef HAVE_LIBRT */
+! #define HAVE_MEMORY_H 1
+! #define HAVE_NANOSLEEP 1
+! #define HAVE_POLL 1
+! #define HAVE_POLL_H 1
+! /* #undef HAVE_PORT_CREATE */
+! /* #undef HAVE_PORT_H */
+! #define HAVE_SELECT 1
+! /* #undef HAVE_SIGNALFD */
+! /* #undef HAVE_STDINT_H */
+! /* #undef HAVE_STDLIB_H */
+! /* #undef HAVE_STRINGS_H */
+! /* #undef HAVE_STRING_H */
+! #define HAVE_SYS_EPOLL_H 1
+! #define HAVE_SYS_EVENTFD_H 1
+! /* #undef HAVE_SYS_EVENT_H */
+! #define HAVE_SYS_INOTIFY_H 1
+! #define HAVE_SYS_SELECT_H 1
+! #define HAVE_SYS_SIGNALFD_H 1
+! #define HAVE_SYS_STAT_H 1
+! #define HAVE_SYS_TYPES_H 1
+! #define HAVE_UNISTD_H 1
+! /* #undef LT_OBJDIR */
+! /* #undef PACKAGE */
+! /* #undef PACKAGE_BUGREPORT */
+! /* #undef PACKAGE_NAME */
+! /* #undef PACKAGE_STRING */
+! /* #undef PACKAGE_TARNAME */
+! /* #undef PACKAGE_URL */
+! /* #undef PACKAGE_VERSION */
+! /* #undef VERSION */
+--- 1,40 ----
+! /* #undef HAVE_CLOCK_GETTIME */
+! /* #undef HAVE_CLOCK_SYSCALL */
+! /* #undef HAVE_DLFCN_H */
+! /* #undef HAVE_EPOLL_CTL */
+! /* #undef HAVE_EVENTFD */
+! #define HAVE_FLOOR 1
+! /* #undef HAVE_INOTIFY_INIT */
+! /* #undef HAVE_INTTYPES_H */
+! /* #undef HAVE_KQUEUE */
+! /* #undef HAVE_LIBRT */
+! #define HAVE_MEMORY_H 1
+! /* #undef HAVE_NANOSLEEP */
+! /* #undef HAVE_POLL */
+! /* #undef HAVE_POLL_H */
+! /* #undef HAVE_PORT_CREATE */
+! /* #undef HAVE_PORT_H */
+! /* #undef HAVE_SELECT */
+! /* #undef HAVE_SIGNALFD */
+! /* #undef HAVE_STDINT_H */
+! /* #undef HAVE_STDLIB_H */
+! /* #undef HAVE_STRINGS_H */
+! /* #undef HAVE_STRING_H */
+! /* #undef HAVE_SYS_EPOLL_H */
+! /* #undef HAVE_SYS_EVENTFD_H */
+! /* #undef HAVE_SYS_EVENT_H */
+! /* #undef HAVE_SYS_INOTIFY_H */
+! /* #undef HAVE_SYS_SELECT_H */
+! /* #undef HAVE_SYS_SIGNALFD_H */
+! #define HAVE_SYS_STAT_H 1
+! #define HAVE_SYS_TYPES_H 1
+! /* #undef HAVE_UNISTD_H */
+! /* #undef LT_OBJDIR */
+! /* #undef PACKAGE */
+! /* #undef PACKAGE_BUGREPORT */
+! /* #undef PACKAGE_NAME */
+! /* #undef PACKAGE_STRING */
+! /* #undef PACKAGE_TARNAME */
+! /* #undef PACKAGE_URL */
+! /* #undef PACKAGE_VERSION */
+! /* #undef VERSION */
+diff -pr -x x_types.h .//plugins/video/codec/xtheora/libtheora-1.1.1/config.h ../tmp/xmppbot/plugins/video/codec/xtheora/libtheora-1.1.1/config.h
+*** .//plugins/video/codec/xtheora/libtheora-1.1.1/config.h	2012-05-30 02:20:26.735499894 +0400
+--- ../tmp/xmppbot/plugins/video/codec/xtheora/libtheora-1.1.1/config.h	2012-05-29 14:38:00.000000000 +0400
+***************
+*** 1,40 ****
+! /* #undef HAVE_CLOCK_GETTIME */
+! /* #undef HAVE_CLOCK_SYSCALL */
+! #define HAVE_DLFCN_H 1
+! #define HAVE_EPOLL_CTL 1
+! #define HAVE_EVENTFD 1
+! /* #undef HAVE_FLOOR */
+! #define HAVE_INOTIFY_INIT 1
+! #define HAVE_INTTYPES_H 1
+! /* #undef HAVE_KQUEUE */
+! /* #undef HAVE_LIBRT */
+! #define HAVE_MEMORY_H 1
+! #define HAVE_NANOSLEEP 1
+! #define HAVE_POLL 1
+! #define HAVE_POLL_H 1
+! /* #undef HAVE_PORT_CREATE */
+! /* #undef HAVE_PORT_H */
+! #define HAVE_SELECT 1
+! /* #undef HAVE_SIGNALFD */
+! /* #undef HAVE_STDINT_H */
+! /* #undef HAVE_STDLIB_H */
+! /* #undef HAVE_STRINGS_H */
+! /* #undef HAVE_STRING_H */
+! #define HAVE_SYS_EPOLL_H 1
+! #define HAVE_SYS_EVENTFD_H 1
+! /* #undef HAVE_SYS_EVENT_H */
+! #define HAVE_SYS_INOTIFY_H 1
+! #define HAVE_SYS_SELECT_H 1
+! #define HAVE_SYS_SIGNALFD_H 1
+! #define HAVE_SYS_STAT_H 1
+! #define HAVE_SYS_TYPES_H 1
+! #define HAVE_UNISTD_H 1
+! /* #undef LT_OBJDIR */
+! /* #undef PACKAGE */
+! /* #undef PACKAGE_BUGREPORT */
+! /* #undef PACKAGE_NAME */
+! /* #undef PACKAGE_STRING */
+! /* #undef PACKAGE_TARNAME */
+! /* #undef PACKAGE_URL */
+! /* #undef PACKAGE_VERSION */
+! /* #undef VERSION */
+--- 1,40 ----
+! /* #undef HAVE_CLOCK_GETTIME */
+! /* #undef HAVE_CLOCK_SYSCALL */
+! /* #undef HAVE_DLFCN_H */
+! /* #undef HAVE_EPOLL_CTL */
+! /* #undef HAVE_EVENTFD */
+! #define HAVE_FLOOR 1
+! /* #undef HAVE_INOTIFY_INIT */
+! /* #undef HAVE_INTTYPES_H */
+! /* #undef HAVE_KQUEUE */
+! /* #undef HAVE_LIBRT */
+! #define HAVE_MEMORY_H 1
+! /* #undef HAVE_NANOSLEEP */
+! /* #undef HAVE_POLL */
+! /* #undef HAVE_POLL_H */
+! /* #undef HAVE_PORT_CREATE */
+! /* #undef HAVE_PORT_H */
+! /* #undef HAVE_SELECT */
+! /* #undef HAVE_SIGNALFD */
+! /* #undef HAVE_STDINT_H */
+! /* #undef HAVE_STDLIB_H */
+! /* #undef HAVE_STRINGS_H */
+! /* #undef HAVE_STRING_H */
+! /* #undef HAVE_SYS_EPOLL_H */
+! /* #undef HAVE_SYS_EVENTFD_H */
+! /* #undef HAVE_SYS_EVENT_H */
+! /* #undef HAVE_SYS_INOTIFY_H */
+! /* #undef HAVE_SYS_SELECT_H */
+! /* #undef HAVE_SYS_SIGNALFD_H */
+! #define HAVE_SYS_STAT_H 1
+! #define HAVE_SYS_TYPES_H 1
+! /* #undef HAVE_UNISTD_H */
+! /* #undef LT_OBJDIR */
+! /* #undef PACKAGE */
+! /* #undef PACKAGE_BUGREPORT */
+! /* #undef PACKAGE_NAME */
+! /* #undef PACKAGE_STRING */
+! /* #undef PACKAGE_TARNAME */
+! /* #undef PACKAGE_URL */
+! /* #undef PACKAGE_VERSION */
+! /* #undef VERSION */
+diff -pr -x x_types.h .//plugins/video/codec/xvpx/CMakeFiles/xvpx.dir/C.includecache ../tmp/xmppbot/plugins/video/codec/xvpx/CMakeFiles/xvpx.dir/C.includecache
+*** .//plugins/video/codec/xvpx/CMakeFiles/xvpx.dir/C.includecache	2012-05-30 03:06:30.875499193 +0400
+--- ../tmp/xmppbot/plugins/video/codec/xvpx/CMakeFiles/xvpx.dir/C.includecache	2012-05-18 02:35:46.000000000 +0400
+***************
+*** 8,23 ****
+  
+  /home/artemka/git/x/xwrcpt/xmppbot/plugins/video/codec/xvpx/mynet.h
+  
+- /home/artemka/git/x/xwrcpt/xmppbot/plugins/video/codec/xvpx/x_vp8.c
+- sys/types.h
+- -
+- stdio.h
+- -
+- mynet.h
+- /home/artemka/git/x/xwrcpt/xmppbot/plugins/video/codec/xvpx/mynet.h
+- x_vp8.h
+- /home/artemka/git/x/xwrcpt/xmppbot/plugins/video/codec/xvpx/x_vp8.h
+- 
+  /home/artemka/git/x/xwrcpt/xmppbot/plugins/video/codec/xvpx/x_vp8.h
+  xwlib/x_types.h
+  -
+--- 8,13 ----
+*************** xwlib/x_utils.h
+*** 64,73 ****
+  x_vp8.h
+  /home/artemka/git/x/xwrcpt/xmppbot/plugins/video/codec/xvpx/x_vp8.h
+  
+- /home/artemka/git/x/xwrcpt/xmppbot/x_dll.c
+- xwlib/x_types.h
+- -
+- 
+  xmppbot/3dparty/libev/ev.h
+  signal.h
+  -
+--- 54,59 ----
+diff -pr -x x_types.h .//x_bus.c ../tmp/xmppbot/x_bus.c
+*** .//x_bus.c	2012-05-30 02:11:58.625500023 +0400
+--- ../tmp/xmppbot/x_bus.c	2012-05-30 16:09:04.000000000 +0400
+*************** __x_bus_jid_commit(x_object *bus)
+*** 296,306 ****
+  static int
+  __x_bus_connect(struct x_bus *bus)
+  {
+-   int err = -1;
+    struct addrinfo hints;
+-   struct addrinfo *res;
+    const char *hostname;
+    const char *servicename;
+  
+    ENTER;
+    if (!bus)
+--- 296,306 ----
+  static int
+  __x_bus_connect(struct x_bus *bus)
+  {
+    struct addrinfo hints;
+    const char *hostname;
+    const char *servicename;
++   int err = -1;
++   struct addrinfo *res = NULL;
+  
+    ENTER;
+    if (!bus)
+*************** __x_bus_connect(struct x_bus *bus)
+*** 318,324 ****
+    hostname = x_object_getattr((struct xobject *) bus, "hostname");
+    servicename = x_object_getattr((struct xobject *) bus, "servicename");
+  
+!   TRACE("Connecting to %s using fd=%d\n",hostname, bus->sys_socket);
+  
+    err = getaddrinfo(hostname, servicename ? servicename : "5222", &hints, &res);
+    if (err)
+--- 318,324 ----
+    hostname = x_object_getattr((struct xobject *) bus, "hostname");
+    servicename = x_object_getattr((struct xobject *) bus, "servicename");
+  
+!   TRACE("Connecting to %s\n",hostname);
+  
+    err = getaddrinfo(hostname, servicename ? servicename : "5222", &hints, &res);
+    if (err)
+*************** __x_bus_connect(struct x_bus *bus)
+*** 334,340 ****
+    case AF_INET:
+      bus->sys_socket = socket(AF_INET, SOCK_STREAM, 0);
+  
+!     TRACE("IPv4 Address %d.%d.%d.%d:%d.%d\n",
+          res->ai_addr->sa_data[0],
+          res->ai_addr->sa_data[1],
+          res->ai_addr->sa_data[2],
+--- 334,341 ----
+    case AF_INET:
+      bus->sys_socket = socket(AF_INET, SOCK_STREAM, 0);
+  
+! 	TRACE("sock %d: IPv4 Address %d.%d.%d.%d:%d.%d\n",
+! 		bus->sys_socket,
+          res->ai_addr->sa_data[0],
+          res->ai_addr->sa_data[1],
+          res->ai_addr->sa_data[2],
+*************** __x_bus_connect(struct x_bus *bus)
+*** 364,370 ****
+    err = connect(bus->sys_socket, res->ai_addr, res->ai_addrlen);
+    if (err)
+      {
+!       TRACE("ERROR!! connect(): %s",strerror(errno));
+        bus->sys_socket = -1;
+        goto clean_and_exit;
+      }
+--- 365,373 ----
+    err = connect(bus->sys_socket, res->ai_addr, res->ai_addrlen);
+    if (err)
+      {
+! 		TRACE("ERROR!! connect(): sock %d, addrlen=%d: %s\n",
+! 			bus->sys_socket, res->ai_addrlen,strerror(errno));
+! 		//close(bus->sys_socket);
+        bus->sys_socket = -1;
+        goto clean_and_exit;
+      }
+diff -pr -x x_types.h .//xwlib/CMakeFiles/xofactory.dir/C.includecache ../tmp/xmppbot/xwlib/CMakeFiles/xofactory.dir/C.includecache
+*** .//xwlib/CMakeFiles/xofactory.dir/C.includecache	2012-05-30 03:06:18.825499196 +0400
+--- ../tmp/xmppbot/xwlib/CMakeFiles/xofactory.dir/C.includecache	2012-05-18 02:35:32.000000000 +0400
+*************** x_config_ios.h
+*** 14,25 ****
+  
+  /home/artemka/git/x/xwrcpt/xmppbot/xwlib/x_config_ios.h
+  
+- /home/artemka/git/x/xwrcpt/xmppbot/xwlib/x_lib.c
+- x_types.h
+- /home/artemka/git/x/xwrcpt/xmppbot/xwlib/x_types.h
+- x_lib.h
+- /home/artemka/git/x/xwrcpt/xmppbot/xwlib/x_lib.h
+- 
+  /home/artemka/git/x/xwrcpt/xmppbot/xwlib/x_lib.h
+  x_types.h
+  /home/artemka/git/x/xwrcpt/xmppbot/xwlib/x_types.h
+--- 14,19 ----
+*************** x_utils.h
+*** 52,79 ****
+  x_obj.h
+  /home/artemka/git/x/xwrcpt/xmppbot/xwlib/x_obj.h
+  
+- /home/artemka/git/x/xwrcpt/xmppbot/xwlib/x_ref.c
+- x_lib.h
+- /home/artemka/git/x/xwrcpt/xmppbot/xwlib/x_lib.h
+- x_ref.h
+- /home/artemka/git/x/xwrcpt/xmppbot/xwlib/x_ref.h
+- 
+  /home/artemka/git/x/xwrcpt/xmppbot/xwlib/x_ref.h
+  x_lib.h
+  /home/artemka/git/x/xwrcpt/xmppbot/xwlib/x_lib.h
+  
+- /home/artemka/git/x/xwrcpt/xmppbot/xwlib/x_string.c
+- sys/types.h
+- -
+- stdlib.h
+- -
+- x_types.h
+- /home/artemka/git/x/xwrcpt/xmppbot/xwlib/x_types.h
+- x_string.h
+- /home/artemka/git/x/xwrcpt/xmppbot/xwlib/x_string.h
+- x_lib.h
+- /home/artemka/git/x/xwrcpt/xmppbot/xwlib/x_lib.h
+- 
+  /home/artemka/git/x/xwrcpt/xmppbot/xwlib/x_string.h
+  sys/types.h
+  -
+--- 46,55 ----
+*************** android/log.h
+*** 146,191 ****
+  stdio.h
+  -
+  
+- /home/artemka/git/x/xwrcpt/xmppbot/xwlib/x_utils.c
+- sys/types.h
+- -
+- string.h
+- -
+- fcntl.h
+- -
+- stdlib.h
+- -
+- stdio.h
+- -
+- time.h
+- -
+- errno.h
+- -
+- x_types.h
+- /home/artemka/git/x/xwrcpt/xmppbot/xwlib/x_types.h
+- x_lib.h
+- /home/artemka/git/x/xwrcpt/xmppbot/xwlib/x_lib.h
+- x_utils.h
+- /home/artemka/git/x/xwrcpt/xmppbot/xwlib/x_utils.h
+- sys/types.h
+- -
+- sys/socket.h
+- -
+- netinet/in.h
+- -
+- netdb.h
+- -
+- arpa/inet.h
+- -
+- unistd.h
+- -
+- sys/ioctl.h
+- -
+- linux/if.h
+- -
+- ifaddrs.h
+- -
+- 
+  /home/artemka/git/x/xwrcpt/xmppbot/xwlib/x_utils.h
+  x_types.h
+  /home/artemka/git/x/xwrcpt/xmppbot/xwlib/x_types.h
+--- 122,127 ----
+diff -pr -x x_types.h .//xwlib/x_config.h ../tmp/xmppbot/xwlib/x_config.h
+*** .//xwlib/x_config.h	2012-05-30 02:20:26.165499894 +0400
+--- ../tmp/xmppbot/xwlib/x_config.h	2012-05-29 14:37:58.000000000 +0400
+***************
+*** 1,73 ****
+! #ifndef X_CONFIG_H_
+! #define X_CONFIG_H_
+! 
+! #ifdef ANDROID
+! #include "x_config_android.h"
+! #elif defined (IOS)
+! #include "x_config_ios.h"
+! #else
+! #define HAVE_STRDUP 1
+! #define HAVE_STRLEN 1
+! #define HAVE_STRCPY 1
+! #define HAVE_INET_NTOP 1
+! /* #undef HAVE_INET_NTOA */
+! 
+! #ifdef WIN32
+! /* #undef HAVE_MSWSOCK_H */
+! /* #undef HAVE_WINSOCK2_H */
+! /* #undef HAVE_WSA_RECVMSG */
+! #else
+! #define HAVE_PTHREAD_H 1
+! #define HAVE_SYS_UIO_H 1
+! #define HAVE_RECVMSG 1
+! #define HAVE_SENDMSG 1
+! #endif
+! 
+! /* #undef HAVE_CLOCK_GETTIME */
+! /* #undef HAVE_CLOCK_SYSCALL */
+! #define HAVE_DLFCN_H 1
+! #define HAVE_EPOLL_CTL 1
+! #define HAVE_EVENTFD 1
+! /* #undef HAVE_FLOOR */
+! #define HAVE_INOTIFY_INIT 1
+! #define HAVE_INTTYPES_H 1
+! /* #undef HAVE_KQUEUE */
+! /* #undef HAVE_LIBRT */
+! #define HAVE_MEMORY_H 1
+! #define HAVE_NANOSLEEP 1
+! #define HAVE_POLL 1
+! #define HAVE_POLL_H 1
+! /* #undef HAVE_PORT_CREATE */
+! /* #undef HAVE_PORT_H */
+! #define HAVE_SELECT 1
+! /* #undef HAVE_SIGNALFD */
+! /* #undef HAVE_STDINT_H */
+! /* #undef HAVE_STDLIB_H */
+! /* #undef HAVE_STRINGS_H */
+! /* #undef HAVE_STRING_H */
+! #define HAVE_SYS_EPOLL_H 1
+! #define HAVE_SYS_EVENTFD_H 1
+! /* #undef HAVE_SYS_EVENT_H */
+! #define HAVE_SYS_INOTIFY_H 1
+! #define HAVE_SYS_SELECT_H 1
+! #define HAVE_SYS_SIGNALFD_H 1
+! #define HAVE_SYS_STAT_H 1
+! #define HAVE_SYS_TYPES_H 1
+! #define HAVE_UNISTD_H 1
+! #define HAVE_GETOPT_H 1 
+! #define HAVE_GETOPT_LONG 1 
+! /* #undef HAVE_GETTID */
+! #define HAVE_SYSCALL 1 
+! 
+! /* #undef LT_OBJDIR */
+! /* #undef PACKAGE */
+! /* #undef PACKAGE_BUGREPORT */
+! /* #undef PACKAGE_NAME */
+! /* #undef PACKAGE_STRING */
+! /* #undef PACKAGE_TARNAME */
+! /* #undef PACKAGE_URL */
+! /* #undef PACKAGE_VERSION */
+! /* #undef VERSION */
+! #endif /* ANDROID */
+! 
+! #endif /* X_CONFIG_H_ */
+--- 1,73 ----
+! #ifndef X_CONFIG_H_
+! #define X_CONFIG_H_
+! 
+! #ifdef ANDROID
+! #include "x_config_android.h"
+! #elif defined (IOS)
+! #include "x_config_ios.h"
+! #else
+! #define HAVE_STRDUP 1
+! #define HAVE_STRLEN 1
+! #define HAVE_STRCPY 1
+! /* #undef HAVE_INET_NTOP */
+! /* #undef HAVE_INET_NTOA */
+! 
+! #ifdef WIN32
+! /* #undef HAVE_MSWSOCK_H */
+! #define HAVE_WINSOCK2_H 1
+! /* #undef HAVE_WSA_RECVMSG */
+! #else
+! /* #undef HAVE_PTHREAD_H */
+! /* #undef HAVE_SYS_UIO_H */
+! /* #undef HAVE_RECVMSG */
+! /* #undef HAVE_SENDMSG */
+! #endif
+! 
+! /* #undef HAVE_CLOCK_GETTIME */
+! /* #undef HAVE_CLOCK_SYSCALL */
+! /* #undef HAVE_DLFCN_H */
+! /* #undef HAVE_EPOLL_CTL */
+! /* #undef HAVE_EVENTFD */
+! #define HAVE_FLOOR 1
+! /* #undef HAVE_INOTIFY_INIT */
+! /* #undef HAVE_INTTYPES_H */
+! /* #undef HAVE_KQUEUE */
+! /* #undef HAVE_LIBRT */
+! #define HAVE_MEMORY_H 1
+! /* #undef HAVE_NANOSLEEP */
+! /* #undef HAVE_POLL */
+! /* #undef HAVE_POLL_H */
+! /* #undef HAVE_PORT_CREATE */
+! /* #undef HAVE_PORT_H */
+! /* #undef HAVE_SELECT */
+! /* #undef HAVE_SIGNALFD */
+! /* #undef HAVE_STDINT_H */
+! /* #undef HAVE_STDLIB_H */
+! /* #undef HAVE_STRINGS_H */
+! /* #undef HAVE_STRING_H */
+! /* #undef HAVE_SYS_EPOLL_H */
+! /* #undef HAVE_SYS_EVENTFD_H */
+! /* #undef HAVE_SYS_EVENT_H */
+! /* #undef HAVE_SYS_INOTIFY_H */
+! /* #undef HAVE_SYS_SELECT_H */
+! /* #undef HAVE_SYS_SIGNALFD_H */
+! #define HAVE_SYS_STAT_H 1
+! #define HAVE_SYS_TYPES_H 1
+! /* #undef HAVE_UNISTD_H */
+! /* #undef HAVE_GETOPT_H */
+! /* #undef HAVE_GETOPT_LONG */
+! /* #undef HAVE_GETTID */
+! /* #undef HAVE_SYSCALL */
+! 
+! /* #undef LT_OBJDIR */
+! /* #undef PACKAGE */
+! /* #undef PACKAGE_BUGREPORT */
+! /* #undef PACKAGE_NAME */
+! /* #undef PACKAGE_STRING */
+! /* #undef PACKAGE_TARNAME */
+! /* #undef PACKAGE_URL */
+! /* #undef PACKAGE_VERSION */
+! /* #undef VERSION */
+! #endif /* ANDROID */
+! 
+! #endif /* X_CONFIG_H_ */
+diff -pr -x x_types.h .//xwlib/x_lib.c ../tmp/xmppbot/xwlib/x_lib.c
+*** .//xwlib/x_lib.c	2012-05-30 02:11:58.625500023 +0400
+--- ../tmp/xmppbot/xwlib/x_lib.c	2012-05-30 14:55:56.000000000 +0400
+*************** x_inet_ntop(int family, void *src, char
+*** 221,233 ****
+    }
+  #endif /* HAVE_INET_NTOP */
+  
+  #ifndef HAVE_SENDMSG
+  int
+! x_send_msg(SOCKET sockfd, _gobee_iomsg_t *mh, int flags)
+    {
+!     //  BUG();
+!     // int err = WSASendMsg((SOCKET)sockfd,&mh,flags,&bytes,NULL,NULL);
+!     return 0;
+    }
+  #endif /* HAVE_SENDMSG */
+  
+--- 221,251 ----
+    }
+  #endif /* HAVE_INET_NTOP */
+  
++ #ifndef HAVE_INET_ATON
++ int 
++ x_inet_aton (char* addr, struct in_addr* dest)
++ {
++     int a[4];
++     if (sscanf(addr, "%d.%d.%d.%d", &a[0], &a[1], &a[2], &a[3]) != 4)
++         return 0;
++     dest->s_addr = a[3] | a[2]<<8 | a[1]<<16 | a[0]<<24;
++     return 1;
++ }
++ #endif
++ 
+  #ifndef HAVE_SENDMSG
+  int
+! x_send_msg(SOCKET s, _gobee_iomsg_t *mh, int flags)
+    {
+! 	  int err = -ENODEV;
+! #if defined(WIN32)
+! 	  int bytes=0;
+! 
+! 	  err = WSASendTo((SOCKET)s,mh->lpBuffers,mh->dwBufferCount,
+! 		  &bytes,flags,mh->name,mh->namelen,NULL,NULL);
+! 
+! #endif
+!     return err;
+    }
+  #endif /* HAVE_SENDMSG */
+  
+*************** int
+*** 236,246 ****
+  x_recv_msg(SOCKET s, _gobee_iomsg_t *mh, int flags)
+    {
+      int err = -ENODEV;
+      /* get message */
+! #if defined(WIN32) && defined( HAVE_WSARECV_MSG )
+! 	int bytes=0;
+!     err = WSARecvMsg((SOCKET)s,&mh,&bytes,NULL,NULL);
+  #endif
+      return err;
+    }
+  #endif /* HAVE_SENDMSG */
+--- 254,269 ----
+  x_recv_msg(SOCKET s, _gobee_iomsg_t *mh, int flags)
+    {
+      int err = -ENODEV;
++ 
+      /* get message */
+! #if defined(WIN32)
+! 	  int bytes=0;
+! 
+! 	  err = WSARecvFrom((SOCKET)s,mh->lpBuffers,mh->dwBufferCount,
+! 		  &bytes,flags,mh->name,mh->namelen,NULL,NULL);
+! 
+  #endif
++ 
+      return err;
+    }
+  #endif /* HAVE_SENDMSG */
+diff -pr -x x_types.h .//xwlib/x_lib.h ../tmp/xmppbot/xwlib/x_lib.h
+*** .//xwlib/x_lib.h	2012-05-30 02:11:58.625500023 +0400
+--- ../tmp/xmppbot/xwlib/x_lib.h	2012-05-30 14:58:10.000000000 +0400
+*************** EXPORT_SYMBOL int x_isblank(int c);
+*** 104,109 ****
+--- 104,110 ----
+  #include "x_config.h"
+  
+  #if defined (WIN32) || defined(_WINDLL) || defined(WINDOWS)
++ 
+  #include <direct.h>
+  #include <malloc.h>
+  #define x_strcmp strcmp
+*************** EXPORT_SYMBOL int x_isblank(int c);
+*** 124,135 ****
+  #define mkdir(x,y) _mkdir(x)
+  #define x_strdup _strdup
+  #define strerror_r(e,s,l) strerror_s(s,l,e)
+! #if (_WIN32_WINNT >= 0x600)
+! # define inet_aton(x,y) inet_pton(AF_INET,x,y)
+! #else
+! # define inet_aton(x,y) do { printf("No such function\n"); } while(0)
+! #endif
+! #else
+  #include <sys/stat.h>
+  // #include <sys/types.h>
+  #define x_strcmp strcmp
+--- 125,133 ----
+  #define mkdir(x,y) _mkdir(x)
+  #define x_strdup _strdup
+  #define strerror_r(e,s,l) strerror_s(s,l,e)
+! 
+! #else /* (WIN32) || defined(_WINDLL) || defined(WINDOWS) */
+! 
+  #include <sys/stat.h>
+  // #include <sys/types.h>
+  #define x_strcmp strcmp
+*************** EXPORT_SYMBOL int x_isblank(int c);
+*** 145,151 ****
+  #define x_read read
+  #define x_memset memset
+  #define x_memcpy memcpy
+! #endif
+  
+  #define x_strstr strstr
+  
+--- 143,150 ----
+  #define x_read read
+  #define x_memset memset
+  #define x_memcpy memcpy
+! 
+! #endif /* (WIN32) || defined(_WINDLL) || defined(WINDOWS) */
+  
+  #define x_strstr strstr
+  
+*************** EXPORT_SYMBOL int x_isblank(int c);
+*** 167,172 ****
+--- 166,177 ----
+  	EXPORT_SYMBOL char *x_inet_ntop (int family, void *src, char *buf, size_t buflen);
+  #endif
+  
++ #ifdef HAVE_INET_ATON
++ #	define x_inet_aton inet_aton
++ #else
++ 	EXPORT_SYMBOL int x_inet_aton (char* addr, struct in_addr* dest);
++ #endif
++ 
+  #if (defined(_DEBUG) || defined(_DEBUG_) \
+   || defined(DEBUG) || defined (__DEBUG__) || defined(__DEBUG) \
+   || defined(PROFILING))

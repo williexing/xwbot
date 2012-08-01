@@ -1,0 +1,835 @@
+/*
+ * xep_0166.c
+ *
+ *  Created on: Jan 5, 2012
+ *      Author: artemka
+ */
+
+#undef DEBUG_PRFX
+
+#include <xwlib/x_config.h>
+#if TRACE_XJINGLE_ON
+#define DEBUG_PRFX "[jingle] "
+#endif
+
+#include <xwlib/x_types.h>
+#include <xwlib/x_obj.h>
+#include <xwlib/x_utils.h>
+
+#include <plugins/sessions_api/sessions.h>
+
+#define JINGLE_NS_1 "urn:xmpp:jingle:1"
+
+enum
+{
+  JINGLE_STATE_NEW = 0, JINGLE_STATE_INCOMING, JINGLE_STATE_OUTCOMING,
+};
+
+enum
+{
+  JINGLE_CR0_PENDING = 0x1, JINGLE_CR0_RUNNING = 0x2, JINGLE_CR0_STOPPED = 0x4,
+};
+
+typedef struct jingle_object
+{
+  x_object super;
+  x_object *iosession;
+  x_obj_attr_t pending_channels;
+  struct
+  {
+    int state;
+    u_int32_t cr0;
+  } regs;
+} x_jingle_object_t;
+
+__inline static void
+_send_set_req_(x_object *to, x_object *msg, x_obj_attr_t *hints)
+{
+  char id[24];
+  setattr("#type", "set", hints);
+  x_snprintf(id, sizeof(id) - 1, "jingle%d", random());
+  setattr("#id", id, hints);
+  x_object_send_down(to, msg, hints);
+  attr_list_clear(hints);
+}
+
+static void
+jingle_on_create(x_object *o)
+{
+  x_jingle_object_t *xjo = (x_jingle_object_t *) (void *) o;
+  ENTER;
+  xjo->pending_channels.next = 0;
+  xjo->pending_channels.key = 0;
+  xjo->pending_channels.val = 0;
+  EXIT;
+}
+
+/* matching function */
+static BOOL
+jingle_match(x_object *o, x_obj_attr_t *_o)
+{
+  const char *tmpstr;
+  const char *tmpstr2;
+  ENTER;
+
+  tmpstr = getattr("xmlns", _o);
+  if (tmpstr && NEQ(tmpstr, "urn:xmpp:jingle:1"))
+    return FALSE;
+
+  tmpstr = getattr("sid", _o);
+  tmpstr2 = x_object_getattr(o, "sid");
+
+  if (!(tmpstr || tmpstr2) || ((tmpstr && tmpstr2) && EQ(tmpstr, tmpstr2)))
+    return TRUE;
+
+  return FALSE;
+
+}
+
+static void
+__jingle_session_send_accept(x_object *o)
+{
+  x_object *chan, *tmp;
+  x_object *descr, *_descr_;
+  x_object *transport;
+  x_object *_chan_;
+  x_object *_tr_;
+  x_obj_attr_t hints =
+    { NULL, NULL, NULL, };
+  x_object *msg;
+
+  x_object *_sess_;
+  x_object *cho;
+  x_object *transp;
+
+  msg = _CPY(o);
+  _ASET(msg, "action", "session-accept");
+
+  setattr("sid", (VAL) _ENV(o, "sid"), &hints);
+  _sess_ = x_session_open(_ENV(o, "from"), o, &hints, 0);
+
+  if (!_sess_)
+    {
+      TRACE("Invalid state: session not found sid=%s\n", _ENV(o, "sid"));
+      return;
+    }
+
+//  x_object_print_path(o,0);
+//  BUG();
+
+  /**
+   * Here we will accept jingle's part of session object,
+   * this is not 'session' class, but 'jingle' class
+   */
+  for (chan = _CHLD(o, "content"); chan; chan = _NXT(chan))
+    {
+      cho = x_session_channel_open2(_sess_, _AGET(chan,_XS("name")));
+      if (!cho)
+        continue;
+      transp = _CHLD(cho, "transport");
+      if (!transp)
+        continue;
+
+      _chan_ = _CPY(chan);
+      x_object_append_child_no_cb(msg, _chan_);
+
+      _tr_ = _CPY(_CHLD(chan, "transport"));
+      _ASET(_tr_, _XS("ufrag"), _AGET(transp,_XS("ufrag")));
+      _ASET(_tr_, _XS("pwd"), _AGET(transp,_XS("pwd")));
+      x_object_append_child_no_cb(_chan_, _tr_);
+
+      descr = _CHLD(chan, "description");
+      _descr_ = _CPY(descr);
+      x_object_append_child_no_cb(_chan_, _descr_);
+
+      // copy description
+      for (tmp = _CHLD(descr, "payload-type"); tmp; tmp = _NXT(tmp))
+        {
+          _INS(_descr_, x_object_full_copy(tmp));
+        }
+
+    }
+
+  _send_set_req_(_PARNT(o), msg, &hints);
+}
+
+static void
+__jingle_session_send_initiate(x_object *o)
+{
+  x_object *chan, *tmp;
+  x_object *descr, *_descr_;
+  x_object *transport;
+  x_object *_chan_;
+  x_object *_tr_;
+  x_obj_attr_t hints =
+    { NULL, NULL, NULL, };
+  x_object *msg;
+
+  x_object *_sess_;
+  x_object *cho;
+  x_object *transp;
+
+  msg = _CPY(o);
+  _ASET(msg, "action", "session-initiate");
+  _ASET(msg, "xmlns", "urn:xmpp:jingle:1");
+  _ASET(msg, "initiator", _ENV(o,"jid"));
+
+  setattr("sid", (VAL) _ENV(o, "sid"), &hints);
+  _sess_ = x_session_open(_ENV(o, "from"), o, &hints, 0);
+
+  if (!_sess_)
+    {
+      TRACE("Invalid state: session not found sid=%s\n", _ENV(o, "sid"));
+      return;
+    }
+
+  x_object_print_path(_sess_, 0);
+
+  for (chan = _CHLD(_sess_,NULL); chan; chan = _SBL(chan))
+    {
+
+      transp = _CHLD(chan, "transport");
+      if (!transp)
+        continue;
+
+      _chan_ = _NEW("content","jingle");
+      _ASET(_chan_, _XS("name"), _GETNM(chan));
+      /** @todo Theese two params should be retreived
+       * from session channel */
+      _ASET(_chan_, _XS("senders"), _XS("both"));
+      _ASET(_chan_, _XS("creator"), _XS("initiator"));
+      _INS(msg, _chan_);
+
+      _tr_ = _CPY(transp);
+      _ASET(_tr_, _XS("ufrag"), _AGET(transp,_XS("ufrag")));
+      _ASET(_tr_, _XS("pwd"), _AGET(transp,_XS("pwd")));
+      _ASET(_tr_, _XS("xmlns"), _AGET(transp,_XS("xmlns")));
+      _INS(_chan_, _tr_);
+
+      descr = _NEW("description","jingle");
+      _ASET(descr, _XS("xmlns"), _XS("urn:xmpp:jingle:apps:rtp:1"));
+      _ASET(descr, _XS("media"), _XS("audio"));
+      _INS(_chan_, descr);
+
+      /**
+       * @todo FIXME this should e dynamically formed from channel's payloads
+       */
+#if 0
+      tmp = _NEW("payload-type","jingle");
+      _ASET(tmp, "id", "96");
+      _ASET(tmp, "name", "THEORA");
+      _ASET(tmp, "width", "320");
+      _ASET(tmp, "height", "240");
+      _ASET(tmp, "clockrate", "90000");
+      x_object_append_child_no_cb(descr, tmp);
+#else
+      tmp = _NEW("payload-type","jingle");
+      _ASET(tmp, "id", "110");
+      _ASET(tmp, "name", "SPEEX");
+      _ASET(tmp, "clockrate", "16000");
+      x_object_append_child_no_cb(descr, tmp);
+#endif
+
+    }
+
+  _send_set_req_(_PARNT(o), msg, &hints);
+}
+
+static void
+__jingle_session_send_candidate(x_object *sesso, x_object *isess,
+    x_object *candmsg)
+{
+  x_obj_attr_t hints =
+    { NULL, NULL, NULL, };
+  x_object *msg;
+  x_object *chan, *chan1;
+  x_object *transport;
+  x_object *cand, *cand1;
+  const char *chname;
+
+  ENTER;
+
+  chname = _AGET(candmsg,_XS("channel-name"));
+  if (!chname)
+    {
+      goto send_err;
+    }
+
+  chan1 = _CHLD(isess,chname);
+  if (!chan1)
+    {
+      goto send_err;
+    }
+
+  cand1 = _CHLD(candmsg,_XS("candidate"));
+  if (!cand1)
+    {
+      goto send_err;
+    }
+
+  chan = _CPY(chan1);
+  _SETNM(chan, _XS("content"));
+  _ASET(chan, _XS("name"), chname);
+
+  transport = _CPY(_CHLD(chan1,_XS("transport")));
+  cand = _CPY(cand1);
+  msg = _CPY(sesso);
+
+  _ASET(msg, "action", "transport-info");
+
+  _INS(transport, cand);
+  _INS(chan, transport);
+  _INS(msg, chan);
+
+  _send_set_req_(_PARNT(sesso), msg, &hints);
+
+  send_err:
+  EXIT;
+
+  return;
+}
+
+static void
+__jingle_on_session_initiate(x_object *o)
+{
+  x_object *chan;
+  x_object *descr;
+  x_object *transport;
+  x_object *payload;
+  x_object *_chan_;
+  x_object *_sess_ = NULL;
+  x_obj_attr_t hints =
+    { NULL, NULL, NULL, };
+
+  x_obj_attr_t params =
+    { NULL, NULL, NULL, };
+
+  const char *sid;
+  const char *from;
+  const char *tmpstr, *tmpstr2;
+  struct jingle_object *msgo = (struct jingle_object *) (void *) o;
+
+  from = _ENV(o, "from");
+  BUG_ON(!from);
+
+  if (from)
+    {
+      if (msgo->regs.state == JINGLE_STATE_NEW)
+        {
+          sid = _AGET(o, "sid");
+          setattr("sid", (VAL) sid, &hints);
+          TRACE("Opening session '%s'\n", sid);
+          _sess_ = x_session_open(from, o, &hints, X_CREAT);
+          attr_list_clear(&hints);
+        }
+      else
+        {
+          TRACE("Jingle session already exists '%s'\n", sid);
+          BUG();
+        }
+    }
+
+  if (!_sess_)
+    {
+      BUG();
+    }
+
+  /**
+   * Iterate over all pending channels
+   */
+  for (chan = _CHLD(o, "content"); chan; chan = _NXT(chan))
+    {
+      _chan_ = x_session_channel_open2(_sess_, _AGET(chan,_XS("name")));
+      if (!_chan_)
+        {
+          continue;
+        }
+      else
+        {
+          // set pending channel name
+          setattr(_AGET(chan,"name"), _AGET(chan,"name"),
+              &msgo->pending_channels);
+        }
+    }
+
+  //  x_object *rejected = _NEW("#container",NULL);
+  for (chan = _CHLD(o, "content"); chan; chan = _NXT(chan))
+    {
+      _chan_ = x_session_channel_open2(_sess_, _AGET(chan,_XS("name")));
+      if (!_chan_)
+        {
+          //          _INS(rejected, _CPY(chan));
+          continue;
+        }
+      else
+        {
+
+          /**
+           * Add transport profiles
+           */
+          transport = _CHLD(chan, "transport");
+          tmpstr = _AGET(transport, "xmlns");
+          //          tmpstr2= _AGET(transport, "xmlns:p");
+
+          if ((tmpstr && x_strstr(tmpstr, "ice"))
+              || (tmpstr && x_strstr(tmpstr2, "p2p")))
+            {
+              x_session_channel_set_transport_profile(_chan_, _XS("__icectl"),
+                  &transport->attrs);
+            }
+          else
+            {
+              x_session_channel_set_transport_profile(_chan_, _XS("__stub"),
+                  &transport->attrs);
+            }
+
+          /**
+           * Iterate over media profiles
+           */
+          descr = _CHLD(chan, "description");
+          tmpstr = _AGET(descr, "xmlns");
+
+          /* set media type information */
+          attr_list_clear(&hints);
+          setattr(_XS("mtype"), _AGET(descr,_XS("media")), &hints);
+          _ASGN(_chan_, &hints);
+
+          if (tmpstr && x_strstr(tmpstr, "rtp"))
+            {
+
+              x_session_channel_set_media_profile(_chan_, _XS("__rtppldctl"));
+
+              for (payload = _CHLD(descr, _XS("payload-type")); payload;
+                  payload = _NXT(payload))
+                {
+                  x_object *tmp;
+                  x_object *tmpparam;
+
+                  const char *ptname;
+                  TRACE("ADDING payload.......\n");
+                  ptname = _AGET(payload,_XS("name"));
+
+                  // assign parameters
+                  for (tmpparam = _CHLD(payload,_XS("parameter")); tmpparam;
+                      tmpparam = _NXT(tmpparam))
+                    {
+                      setattr(_AGET(tmpparam,"name"), _AGET(tmpparam,"value"),
+                          &payload->attrs);
+                    }
+
+                  x_session_add_payload_to_channel(_chan_,
+                      _AGET(payload,_XS("id")), ptname, &payload->attrs);
+
+                }
+            }
+          else
+            {
+              x_session_channel_set_media_profile(_chan_, _XS("__stub"));
+            }
+        }
+    }
+  //  x_object_destroy_no_cb(rejected);
+
+}
+
+static void
+__jingle_session_transport_info(x_object *o)
+{
+  x_object *chan;
+  x_object *descr;
+  x_object *transport;
+  x_object *candidate;
+  x_object *_chan_;
+  x_object *_transport_;
+  x_string_t tmpstr1, tmpstr2;
+
+  ENTER;
+
+  for (chan = _CHLD(o, "content"); chan; chan = _NXT(chan))
+    {
+      transport = _CHLD(chan, "transport");
+      _chan_ = x_session_channel_open(o, _ENV(chan, "from"), _ENV(chan, "sid"),
+          _AGET(chan, "name"));
+
+      if(!_chan_)
+        continue;
+
+      _transport_ = _CHLD(_chan_, "transport");
+
+      if (!_transport_)
+        continue;
+
+      _ASGN(_transport_, (x_obj_attr_t *)&transport->attrs);
+
+      for (candidate = _CHLD(transport, "candidate"); candidate; candidate =
+          _NXT(candidate))
+        {
+          /* set username/password attributes for each candidate
+           * for ICE/STUN object */
+          tmpstr1 = _ENV(candidate,"ufrag");
+          tmpstr2 = _ENV(candidate,"pwd");
+
+          TRACE("ADDING REMOTE CANDIDATE '%s:%s'\n", tmpstr1, tmpstr2);
+
+          _ASET(candidate, _XS("username"), tmpstr1);
+          _ASET(candidate, _XS("password"), tmpstr2);
+
+          x_session_channel_add_transport_candidate(_chan_, candidate);
+        }
+    }
+
+  EXIT;
+}
+
+static void
+__jingle_session_terminate(x_object *o)
+{
+  x_obj_attr_t hints =
+    { 0, 0, 0 };
+  x_object *_sess_;
+
+  x_object_print_path(o->bus, 0);
+
+  setattr("sid", (VAL) _AGET(o, "sid"), &hints);
+  _sess_ = x_session_open(_ENV(o, "from"), o, &hints, 0);
+
+  if (_sess_)
+    {
+      TRACE("Deleting session %p -> %s\n", _sess_, _AGET(o, "sid"));
+      _REFPUT(_sess_, NULL);
+    }
+  else
+    {
+      TRACE("Cannot find session %s\n", _AGET(o, "sid"));
+    }
+}
+
+static void
+__jingle_unknown(x_object *o)
+{
+}
+
+static void
+__jingle_content_accept(x_object *o)
+{
+}
+
+static void
+__jingle_content_add(x_object *o)
+{
+}
+
+static void
+__jingle_content_modify(x_object *o)
+{
+}
+
+static void
+__jingle_content_reject(x_object *o)
+{
+}
+
+static void
+__jingle_content_remove(x_object *o)
+{
+}
+static void
+__jingle_description_info(x_object *o)
+{
+}
+static void
+__jingle_security_info(x_object *o)
+{
+}
+static void
+__jingle_session_accept(x_object *o)
+{
+  struct jingle_object *msgo = (struct jingle_object *) (void *) o;
+  msgo->regs.cr0 = JINGLE_CR0_RUNNING;
+}
+
+static void
+__jingle_session_info(x_object *o)
+{
+}
+
+static void
+__jingle_transport_accept(x_object *o)
+{
+}
+
+static void
+__jingle_transport_reject(x_object *o)
+{
+}
+static void
+__jingle_transport_replace(x_object *o)
+{
+}
+
+typedef enum
+{
+  JINGLE_UNKNOWN_TYPE,
+  JINGLE_CONTENT_ACCEPT,
+  JINGLE_CONTENT_ADD,
+  JINGLE_CONTENT_MODIFY,
+  JINGLE_CONTENT_REJECT,
+  JINGLE_CONTENT_REMOVE,
+  JINGLE_DESCRIPTION_INFO,
+  JINGLE_SECURITY_INFO,
+  JINGLE_SESSION_ACCEPT,
+  JINGLE_SESSION_INFO,
+  JINGLE_SESSION_INITIATE,
+  JINGLE_SESSION_TERMINATE,
+  JINGLE_TRANSPORT_ACCEPT,
+  JINGLE_TRANSPORT_INFO,
+  JINGLE_TRANSPORT_REJECT,
+  JINGLE_TRANSPORT_REPLACE,
+} x_jingle_action_type;
+
+typedef struct
+{
+  const char *name;
+  void
+  (*handler)(x_object *);
+} x_jingle_action_t;
+
+static const x_jingle_action_t jingle_actions[] =
+  {
+    { _XS("unknown-type"), __jingle_unknown },
+    { "content-accept", __jingle_content_accept },
+    { "content-add", __jingle_content_add },
+    { "content-modify", __jingle_content_modify },
+    { "content-reject", __jingle_content_reject },
+    { "content-remove", __jingle_content_remove },
+    { "description-info", __jingle_description_info },
+    { "security-info", __jingle_security_info },
+    { "session-accept", __jingle_session_accept },
+    { "session-info", __jingle_session_info },
+    { "session-initiate", __jingle_on_session_initiate },
+    { "session-terminate", __jingle_session_terminate },
+    { "transport-accept", __jingle_transport_accept },
+    { "transport-info", __jingle_session_transport_info },
+    { "transport-reject", __jingle_transport_reject },
+    { "transport-replace", __jingle_transport_replace }, };
+
+x_string_t
+jingle_get_action_name(x_jingle_action_type action)
+{
+  return jingle_actions[action].name;
+}
+
+x_jingle_action_type
+jingle_get_action_type(const x_string_t action)
+{
+  static const int num_actions = sizeof(jingle_actions)
+      / sizeof(x_jingle_action_t);
+  int i = 1;
+  for (; i < num_actions; ++i)
+    {
+      if (EQ(action, jingle_actions[i].name))
+        return i;
+    }
+  return JINGLE_UNKNOWN_TYPE;
+}
+
+static int
+jingle_msg_recv(x_object *to, const x_object *from, const x_object *msg)
+{
+  const char *chnam;
+  x_string_t subj;
+  struct jingle_object *jnglo = (struct jingle_object *) (void *) to;
+  ENTER;
+  TRACE("Got message from %s\n", _GETNM(from));
+
+  subj = _AGET(msg,_XS("subject"));
+  if (EQ(_XS("candidate-new"),subj))
+    {
+      TRACE("NEW TRANSPORT CANDIDATE RECEIVED '%s:%s'\n",
+          _GETNM(from), _AGET(from,_XS("sid")));
+      //      x_object_print_path(msg, 0);
+      __jingle_session_send_candidate(to, from, msg);
+    }
+  else if (EQ(_XS("channel-ready"),subj))
+    {
+      chnam = _AGET(msg,_XS("chname"));
+
+      TRACE("NEW MEDIA CHANNEL RECEIVED '%s:%s', chname='%s'\n",
+          _GETNM(from), _AGET(from,_XS("sid")), chnam);
+
+      if (chnam)
+        {
+          TRACE("next chan = %p\n", jnglo->pending_channels.next);
+          delattr(chnam, &jnglo->pending_channels);
+          if (attr_list_is_empty(&jnglo->pending_channels))
+            {
+              TRACE("Initiating new session...\n");
+              if (jnglo->regs.state == JINGLE_STATE_OUTCOMING)
+                __jingle_session_send_initiate(to);
+              else if (jnglo->regs.state == JINGLE_STATE_INCOMING)
+                __jingle_session_send_accept(to);
+            }
+        }
+    }
+//  else if (EQ(_XS("session-ready"),subj))
+//    {
+//      if (_ENV(to,_XS("from")))
+//        __jingle_session_send_initiate(to);
+//    }
+
+  EXIT;
+  return 0;
+}
+
+static void
+jingle_parse_commit(x_object *o)
+{
+  x_jingle_action_type atyp;
+  x_object *tmp;
+  x_obj_attr_t hints =
+    { NULL, NULL, NULL, };
+  x_string_t action = NULL;
+  struct x_bus *bus = (struct x_bus *) (void *) o->bus;
+
+  ENTER;
+
+  printf("%s:%s():%d\n", __FILE__, __FUNCTION__, __LINE__);
+
+  if (EQ(_XS("error"),_ENV(o,_XS("type"))))
+    {
+      goto _clear_the_state;
+    }
+
+  // always ack
+  setattr("#type", "result", &hints);
+  x_object_send_down(x_object_get_parent(o), NULL, &hints);
+  attr_list_clear(&hints);
+
+  action = _AGET(o, "action");
+  atyp = jingle_get_action_type(action);
+
+  TRACE("JINGLE ACTION = '%s'\n", jingle_get_action_name(atyp));
+
+  if (jingle_actions[atyp].handler)
+    jingle_actions[atyp].handler(o);
+
+  _clear_the_state:
+  // clear
+  while ((tmp = _CHLD(o, NULL)) != NULL)
+    {
+      _REFPUT(tmp, NULL);
+    }
+
+  EXIT;
+}
+
+static struct xobjectclass jingle_class;
+
+static void
+___jingle_on_session_new(void *_obj)
+{
+  x_object *stream, *iqo, *xbus;
+  struct jingle_object *jingle;
+  const char *sid;
+  x_obj_attr_t hints =
+    { 0, 0, 0 };
+  char sbuf[256];
+
+  ENTER;
+  x_object_to_path(_obj, sbuf, sizeof(sbuf) - 1);
+  TRACE("New session object at '%s'\n", sbuf);
+
+  sid = _AGET(_obj,"sid");
+  if (sid)
+    {
+      xbus = ((x_object *) _obj)->bus;
+      stream = _CHLD(xbus,"stream:stream");
+      setattr("from", _AGET(X_OBJECT(_obj),"remote"), &hints);
+      iqo = _FIND(_CHLD(stream,"iq"), &hints);
+
+      if (!iqo)
+        {
+          iqo = _NEW("iq","jabber:client");
+          _INS(stream, iqo);
+          /* assign attributes */
+          _ASGN(iqo, &hints);
+        }
+      attr_list_clear(&hints);
+
+      setattr("sid", _AGET(X_OBJECT(_obj),"sid"), &hints);
+      jingle = (struct jingle_object *) _FIND(
+          _CHLD(iqo,jingle_class.cname), &hints);
+
+      if (!jingle)
+        {
+
+          jingle = (struct jingle_object *) _NEW(jingle_class.cname,JINGLE_NS_1);
+
+          _INS(iqo, X_OBJECT(jingle));
+          x_object_assign(X_OBJECT(jingle), &hints);
+          TRACE("JINGLE OBJECT NOT FOUND\n");
+          x_object_print_path(X_OBJECT(jingle), 0);
+
+          jingle->regs.state = JINGLE_STATE_OUTCOMING;
+
+        }
+      else
+        {
+          TRACE("FOUND JINGLE OBJECT:\n");
+          x_object_print_path(X_OBJECT(jingle), 0);
+
+          jingle->regs.state = JINGLE_STATE_INCOMING;
+
+        }
+      attr_list_clear(&hints);
+
+      jingle->iosession = _obj;
+
+      TRACE("Subscribing as %p to %p\n", jingle, _obj);
+      _SBSCRB(X_OBJECT(_obj), X_OBJECT(jingle));
+
+    }
+
+  EXIT;
+}
+
+static struct x_path_listener jingle_session_listener;
+
+static void
+___jingle_on_channel_new(void *_obj)
+{
+  char sbuf[256];
+  ENTER;
+  x_object_to_path(_obj, sbuf, sizeof(sbuf) - 1);
+  TRACE("New channel object at '%s'\n", sbuf);
+  EXIT;
+}
+
+static struct x_path_listener jingle_channel_listener;
+
+__x_plugin_visibility
+__plugin_init void
+jingle_init(void)
+{
+  ENTER;
+
+  jingle_class.cname = "jingle";
+  jingle_class.psize = (unsigned int) (sizeof(struct jingle_object)
+      - sizeof(x_object));
+  jingle_class.on_create = &jingle_on_create;
+  jingle_class.match = &jingle_match;
+  jingle_class.rx = &jingle_msg_recv;
+  jingle_class.finalize = &jingle_parse_commit;
+  x_class_register_ns(jingle_class.cname, &jingle_class, JINGLE_NS_1);
+
+  jingle_session_listener.on_x_path_event = &___jingle_on_session_new;
+  x_path_listener_add("__isession", &jingle_session_listener);
+
+  jingle_channel_listener.on_x_path_event = &___jingle_on_channel_new;
+  x_path_listener_add("__iostream", &jingle_channel_listener);
+
+  EXIT;
+}
+
+PLUGIN_INIT(jingle_init);
+

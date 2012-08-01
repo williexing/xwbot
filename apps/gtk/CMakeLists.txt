@@ -1,0 +1,90 @@
+CMAKE_MINIMUM_REQUIRED (VERSION 2.6) 
+PROJECT (xwclient)
+
+SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
+
+SET(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/output CACHE PATH "Path for libraries")
+SET(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/output CACHE PATH "Path for libraries")
+
+FIND_PACKAGE(Threads)
+#find_package(GTK2 REQUIRED gtk glade)
+#find_package(GLIB2)
+#FIND_PACKAGE(Freetype REQUIRED)
+FIND_PACKAGE(GTK2 REQUIRED gtk glade)
+#find_package(GDK)
+#find_package(Atk)
+#FIND_PACKAGE(OGGTHEORA)
+FIND_PACKAGE(Speex)
+FIND_PACKAGE(OpenGLES2)
+FIND_PACKAGE(EGL)
+
+#ADD_SUBDIRECTORY( libev )
+ADD_SUBDIRECTORY( xmppbot )
+
+IF( NOT GTK2_FOUND )
+MESSAGE (FATAL_ERROR "GTK NOT FOUND")
+ENDIF( NOT GTK2_FOUND )
+
+IF( NOT SPEEX_FOUND )
+MESSAGE (FATAL_ERROR "Speex NOT FOUND")
+ENDIF( NOT SPEEX_FOUND )
+
+IF( NOT OPENGLES2_FOUND )
+MESSAGE (FATAL_ERROR "GLES2 NOT FOUND")
+ENDIF( NOT OPENGLES2_FOUND )
+
+IF( NOT EGL_FOUND )
+MESSAGE (FATAL_ERROR "GLES2 NOT FOUND")
+ENDIF( NOT EGL_FOUND )
+
+INCLUDE_DIRECTORIES(${GTK2_INCLUDE_DIRS})
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/xmppbot)
+#include_directories(${GDK_INCLUDE_DIRS})
+#include_directories(${GLIB2_INCLUDE_DIRS})
+INCLUDE_DIRECTORIES(${OGGTHEORA_INCLUDE_DIR})
+INCLUDE_DIRECTORIES(${SPEEX_INCLUDE_DIRS})
+INCLUDE_DIRECTORIES(${OPENGLES2_INCLUDE_DIRS})
+include_directories(${EGLINCLUDE_DIRS})
+#include_directories(${Atk_INCLUDE_DIRS})
+include_directories( ${CMAKE_SOURCE_DIR}/xmmpbot/libev )
+
+set(CORELIBS ${OPENGLES2_LIBRARIES} ${GTK2_LIBRARIES}
+ ${OGGTHEORA_LIBRARY} ${SPEEX_LIBRARY} ${EGL_LIBRARIES} ev m c vpx )   
+set(CMAKE_C_FLAGS "-Wall -pthread -g3 -gdwarf-2")
+set(SHARE_DIR "${CMAKE_INSTALL_PREFIX}/share/xwclient")
+
+
+#add_executable(xwclient main.c udp.c x_vp8.c x_vpx.c x_theora.c 
+#x_gl.c v4l2_capture.c xx_theora.c ui/treemodel.c)
+
+#add_executable(xwclient main.c ui/v4l2_capture.c 
+#ui/treemodel.c ui/xvirtdisplay_view.c ui/xvirt_cam.c ui/x_gl.c)
+
+add_executable(xwclient main.c ui/v4l2_capture.c 
+ui/treemodel.c ui/xvirtdisplay_view.c ui/x_gl.c)
+
+SET_TARGET_PROPERTIES(xwclient PROPERTIES COMPILE_FLAGS "-g -gdwarf-2 -DDEBUG")
+
+target_link_libraries(xwclient ${CORELIBS} xw sessions)
+
+INSTALL(TARGETS xwclient DESTINATION bin)
+FILE(GLOB shfiles "${CMAKE_CURRENT_SOURCE_DIR}/*.glade")
+INSTALL(FILES ${shfiles} DESTINATION ${SHARE_DIR})
+
+INCLUDE (CheckIncludeFiles)
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
+
+SET(TARGET_VERSION_MAJOR 1)
+SET(TARGET_VERSION_MINOR 2)
+SET(CPACK_PACKAGE_VERSION "1.0.2")
+SET(CPACK_PACKAGE_VERSION_MAJOR "1")
+SET(CPACK_PACKAGE_VERSION_MINOR "0")
+SET(CPACK_PACKAGE_VERSION_PATCH "2")
+SET(CPACK_STRIP_FILES xwclient)
+SET(CPACK_GENERATOR "DEB")
+SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "GoBee") 
+ 
+INCLUDE(CPack)
+
+ENABLE_TESTING()
+

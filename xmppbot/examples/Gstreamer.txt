@@ -1,0 +1,1 @@
+gst-launch-0.10  udpsrc port=24444 caps=application/x-rtp, media=video, payload=96, clock-rate=90000, encoding-name=THEORA ! queue ! rtptheoradepay ! theoradec ! ffmpegcolorspace ! videoscale ! ximagesink 2>&1

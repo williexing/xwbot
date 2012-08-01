@@ -1,0 +1,13 @@
+- COMPILE -
+To compile type next command. Change parameters to whatever you need.
+
+# make CC=arm-linux-gnueabi-gcc topdir=$(pwd) \
+	HOST=arm-linux-gnueabi
+
+- INSTALL -
+
+Type following command
+
+# make DESTDIR=$(pwd) install
+
+Then check $(pwd)/delivery for all assembled components.

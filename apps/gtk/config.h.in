@@ -1,0 +1,7 @@
+#ifndef _CONFIG_H_
+#define _CONFIG_H_
+
+#cmakedefine SHARE_DIR "@SHARE_DIR@"
+
+#endif /* _CONFIG_H_ */
+

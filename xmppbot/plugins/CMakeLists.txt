@@ -7,7 +7,7 @@ add_subdirectory( crypt )
 #add_subdirectory( ft )
 add_subdirectory( disco )
 add_subdirectory( bind )
-#add_subdirectory( inband_shell )
+add_subdirectory( inband_shell )
 add_subdirectory( core )
 add_subdirectory( sessions_api )
 add_subdirectory( ice )
@@ -27,6 +27,7 @@ add_subdirectory( eventdomains )
 #LINK_DIRECTORIES( ${include_top_dir}/3dparty/openssl  )
 
 link_directories( ${lib_contrib_dir}  )
+INCLUDE_DIRECTORIES( ${include_contrib_dir} )
 
 INCLUDE(CPack)
 

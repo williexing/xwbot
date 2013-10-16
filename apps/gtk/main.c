@@ -104,7 +104,8 @@ gobee_load_plugins(const char *_dir)
 
 /**
  *
- */EXPORT_SYMBOL x_object *
+ */
+EXPORT_SYMBOL x_object *
 gobee_init(const char *jid, const char *pw)
 {
   x_object * _bus;
@@ -116,9 +117,10 @@ gobee_init(const char *jid, const char *pw)
   /* load all additional plugins from plugins dir */
   gobee_load_plugins(PLUGINS_DIR);
   gobee_load_plugins("./");
+  gobee_load_plugins("./output");
 
   /* instantiate '#xbus' object from 'gobee' namespace */
-  _bus = _NEW("#xbus", "gobee");
+  _bus = _GNEW("#xbus", "gobee");
   BUG_ON(!_bus);
 
   /* two ways on setting xbus attributes */
@@ -180,44 +182,55 @@ gobee_start_call(const char *jid)
       BUG();
     }
 
+#if 1
   /* open/create audio channel */
-  _chan_ = x_session_channel_open2(X_OBJECT(_sess_), "m.V");
+  _chan_ = x_session_channel_open2(X_OBJECT(_sess_), "m.A");
+
+  setattr(_XS("mtype"), _XS("audio"), &hints);
+  _ASGN(X_OBJECT(_chan_), &hints);
 
   attr_list_clear(&hints);
-//  setattr(_XS("mtype"), _XS("video"), &hints);
-  setattr(_XS("mtype"), _XS("audio"), &hints);
-  _ASGN(_chan_, &hints);
-
-  x_session_channel_set_media_profile(X_OBJECT(_chan_), _XS("__rtppldctl"));
-
-  //  setattr("pwd", "MplayerAudio_pwd", &hints);
-  //  setattr("ufrag", "todo", &hints);
-  x_session_channel_set_transport_profile(X_OBJECT(_chan_), _XS("__icectl"),
-      &hints);
+  x_session_channel_set_transport_profile_ns(X_OBJECT(_chan_), _XS("__icectl"),
+      _XS("jingle"), &hints);
+  x_session_channel_set_media_profile_ns(X_OBJECT(_chan_),
+      _XS("__rtppldctl"),_XS("jingle"));
 
   /* add channel payloads */
-//  setattr("clockrate", "90000", &hints);
-//  x_session_add_payload_to_channel(_chan_, _XS("96"), _XS("THEORA"), &hints);
   setattr("clockrate", "16000", &hints);
-  x_session_add_payload_to_channel(_chan_, _XS("110"), _XS("SPEEX"), &hints);
+  x_session_add_payload_to_channel(_chan_, _XS("110"), _XS("SPEEX"), MEDIA_IO_MODE_OUT, &hints);
 
   /* clean attribute list */
   attr_list_clear(&hints);
+#endif
 
-
-#if 0
+#if 1
   /* open/create video channel */
   _chan_ = x_session_channel_open2(X_OBJECT(_sess_), "m.V");
 
-  //  setattr("pwd", "MplayerVideo_pwd", &hints);
-  //  setattr("ufrag", "todo", &hints);
-  x_session_channel_set_transport_profile(X_OBJECT(_chan_), _XS("__icectl"),
-      &hints);
-  x_session_channel_set_media_profile(X_OBJECT(_chan_), _XS("__rtppldctl"));
+  setattr(_XS("mtype"), _XS("video"), &hints);
+  _ASGN(X_OBJECT(_chan_), &hints);
+
+  attr_list_clear(&hints);
+  x_session_channel_set_transport_profile_ns(X_OBJECT(_chan_), _XS("__icectl"),
+      _XS("jingle"), &hints);
+
+  x_session_channel_set_media_profile_ns(X_OBJECT(_chan_), _XS("__rtppldctl"),_XS("jingle"));
 
   /* add channel payloads */
-  x_session_add_payload_to_channel(_chan_, _XS("96"), _XS("THEORA"), &hints);
+  attr_list_clear(&hints);
+  setattr(_XS("clockrate"), _XS("90000"), &hints);
+  setattr(_XS("width"), _XS("320"), &hints);
+  setattr(_XS("height"), _XS("240"), &hints);
+  setattr(_XS("sampling"), _XS("YCbCr-4:2:0"), &hints);
+  x_session_add_payload_to_channel(_chan_, _XS("96"), _XS("THEORA"), MEDIA_IO_MODE_OUT, &hints);
 #endif
+
+  // commit channel
+  setattr(_XS("$commit"), _XS("yes"), &hints);
+  _ASGN(X_OBJECT(_chan_), &hints);
+  attr_list_clear(&hints);
+
+  x_session_start(_sess_);
 
 }
 
@@ -256,7 +269,7 @@ show_roster_widget(void)
       return;
     }
 
-  roster_win = GTK_WIDGET( gtk_builder_get_object( builder, "rosterWin" ) );
+  roster_win = GTK_WIDGET(gtk_builder_get_object(builder, "rosterWin"));
 
   gtk_builder_connect_signals(builder, NULL);
 
@@ -266,7 +279,7 @@ show_roster_widget(void)
 
 //  fill_model(customlist);
 
-  tview = GTK_TREE_VIEW( gtk_builder_get_object( builder, "roster_tree" ) );
+  tview = GTK_TREE_VIEW(gtk_builder_get_object(builder, "roster_tree"));
   gtk_tree_view_set_reorderable(tview, TRUE);
   gtk_tree_view_set_model(tview, GTK_TREE_MODEL(customlist));
 //  g_object_unref(customlist);
@@ -341,11 +354,11 @@ quit_clicked(GtkWidget *wgt, gpointer data)
   exit(0);
 }
 
-G_MODULE_EXPORT void
-print_bus(GtkWidget *wgt, gpointer data)
-{
-  x_object_print_path(bus, 0);
-}
+//G_MODULE_EXPORT void
+//print_bus(GtkWidget *wgt, gpointer data)
+//{
+//  x_object_print_path(bus, 0);
+//}
 
 G_MODULE_EXPORT int
 gobee_run_call_dlg(GtkWidget *wgt, gpointer data)
@@ -364,14 +377,14 @@ gobee_run_call_dlg(GtkWidget *wgt, gpointer data)
 
   gtk_builder_connect_signals(builder, NULL);
 
-  call_dlg = GTK_WIDGET( gtk_builder_get_object( builder, "call_dialog" ) );
+  call_dlg = GTK_WIDGET(gtk_builder_get_object(builder, "call_dialog"));
 
-  current_call_dlg_data.peer_entry =
-      GTK_ENTRY(gtk_builder_get_object( builder, "peer_addr_textbox" ));
-  current_call_dlg_data.video_chk_btn =
-      GTK_CHECK_BUTTON(gtk_builder_get_object( builder, "checkbutton2" ));
-  current_call_dlg_data.voice_chk_btn =
-      GTK_CHECK_BUTTON(gtk_builder_get_object( builder, "checkbutton1" ));
+  current_call_dlg_data.peer_entry = GTK_ENTRY(
+      gtk_builder_get_object(builder, "peer_addr_textbox"));
+  current_call_dlg_data.video_chk_btn = GTK_CHECK_BUTTON(
+      gtk_builder_get_object(builder, "checkbutton2"));
+  current_call_dlg_data.voice_chk_btn = GTK_CHECK_BUTTON(
+      gtk_builder_get_object(builder, "checkbutton1"));
 
   g_object_unref(G_OBJECT(builder));
 
@@ -405,7 +418,6 @@ main(int argc, char *argv[])
 
 //  pthread_t tid;
 
-
   gtk_init(&argc, &argv);
 
   if (!g_thread_supported())
@@ -420,9 +432,9 @@ main(int argc, char *argv[])
       return (1);
     }
 
-  login_win = GTK_WIDGET( gtk_builder_get_object( builder, "loginDialog" ) );
-  jidw = GTK_WIDGET( gtk_builder_get_object( builder, "entry1" ) );
-  qp = GTK_WIDGET( gtk_builder_get_object( builder, "entry2" ) );
+  login_win = GTK_WIDGET(gtk_builder_get_object(builder, "loginDialog"));
+  jidw = GTK_WIDGET(gtk_builder_get_object(builder, "entry1"));
+  qp = GTK_WIDGET(gtk_builder_get_object(builder, "entry2"));
 
   gtk_builder_connect_signals(builder, NULL);
   g_object_unref(G_OBJECT(builder));

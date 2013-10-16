@@ -1,12 +1,12 @@
 #ifndef X_CONFIG_H_
 #define X_CONFIG_H_
 
-#include "x_trace_defs.h"
+#include <x_trace_defs.h>
 
 #ifdef ANDROID
-#include "x_config_android.h"
+#include <x_config_android.h>
 #elif defined (IOS)
-#include "x_config_ios.h"
+#include <x_config_ios.h>
 #else
 #cmakedefine HAVE_STRDUP @HAVE_STRDUP@
 #cmakedefine HAVE_STRLEN @HAVE_STRLEN@

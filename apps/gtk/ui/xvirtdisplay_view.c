@@ -6,7 +6,7 @@
  */
 
 #undef DEBUG_PRFX
-#include <xwlib/x_config.h>
+#include <x_config.h>
 #if TRACE_VIRTUAL_DIPSLAY_ON
 #define TRACE_LEVEL 2
 #define DEBUG_PRFX "[VIRT-DISPLAY] "
@@ -87,6 +87,37 @@ x_vdisplay_try_write(x_object *o, void *buf, u_int32_t len, x_obj_attr_t *attr)
   return len;
 }
 
+static int
+x_vdisplay_try_writev(x_object *o, x_iobuf_t *iov, u_int32_t iovlen, x_obj_attr_t *attr)
+{
+  int err;
+  th_ycbcr_buffer yuv;
+  virtual_display_t *mctl = (virtual_display_t *) o;
+  u_int32_t l;
+
+  yuv[0].data = X_IOV_DATA(&iov[0]);
+  yuv[0].width = 320;
+  yuv[0].height = 240;
+  yuv[0].stride = 352;
+
+  yuv[1].width = yuv[0].width >> 1;
+  yuv[1].height = yuv[0].height >> 1;
+  yuv[1].stride = yuv[0].stride >> 1;
+
+  yuv[2].width = yuv[1].width;
+  yuv[2].height = yuv[1].height;
+  yuv[2].stride = yuv[1].stride;
+
+  yuv[1].data = X_IOV_DATA(&iov[1]);
+  yuv[2].data = X_IOV_DATA(&iov[2]);
+
+  Render(yuv);
+  worker_push(&__invalidate, mctl->window);
+
+  return 100;
+}
+
+
 /**
  * This should be run in UI thread.
  */
@@ -156,7 +187,7 @@ x_vdisplay_exit(x_object *this__)
 {
   virtual_display_t *mctl = (virtual_display_t *) this__;
   ENTER;
-  printf("%s:%s():%d\n",__FILE__,__FUNCTION__,__LINE__);
+//  printf("%s:%s():%d\n",__FILE__,__FUNCTION__,__LINE__);
   EXIT;
 }
 
@@ -189,6 +220,7 @@ x_virtdisplay_init(void)
   virt_display_classs.on_append = &x_vdisplay_on_append;
   virt_display_classs.finalize = &x_vdisplay_exit;
   virt_display_classs.try_write = &x_vdisplay_try_write;
+  virt_display_classs.try_writev = &x_vdisplay_try_writev;
 
   x_class_register_ns(virt_display_classs.cname, &virt_display_classs,
       _XS("gobee:media"));

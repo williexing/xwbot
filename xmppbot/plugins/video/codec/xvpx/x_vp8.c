@@ -164,53 +164,8 @@ parse_vp8_packet(const unsigned char * buffer, int buffer_size,
         return -1;
 
       descriptor->picture_id |= buffer[pos] & 0x7F;
-      extension = (buffer[pos] & 0x80) != 0;
+      extension = ((buffer[pos] & 0x80) != 0);
       pos += 1;
     }
   return pos;
 }
-
-void
-on_vp8_packet_received(void *data, int len, void *cb_data)
-{
-  void *packet_frag;
-  int off;
-  int psiz = len;
-  vp8_descriptor_t vp8d;
-  rtp_hdr_t *_rtp;
-
-  if (!data)
-    return;
-
-  _rtp = (rtp_hdr_t *) data;
-  psiz -= sizeof(rtp_hdr_t);
-  off = parse_vp8_packet(_rtp->payload, psiz, &vp8d);
-
-  if (off <= 0)
-    return;
-
-  switch (vp8d.fragmentation_info)
-    {
-  case NOT_FRAGMENTED:
-    printf("Not fragmented!");
-    break;
-  case FIRST_FRAGMENT:
-    printf("First frag!");
-    break;
-  case MIDDLE_FRAGMENT:
-    printf("Middle frag!");
-    break;
-  case LAST_FRAGMENT:
-    printf("Last frag!");
-    break;
-    };
-
-  printf(": %s %s, PIC-ID=%u\n", vp8d.frame_beginning ? "BEGINNING" : "",
-      vp8d.non_reference_frame ? "REF" : "NO-REF",
-      vp8d.frame_beginning ? vp8d.picture_id : 0);
-
-  packet_frag = _rtp->payload + off;
-  psiz -= off;
-  return;
-}
-

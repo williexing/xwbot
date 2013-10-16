@@ -1,6 +1,8 @@
 cmake_minimum_required (VERSION 2.6) 
 project (xmppbot)
 
+#set(GIT_EXECUTABLE /usr/bin/git)
+
 SET(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/output CACHE PATH "Path for libraries")
 SET(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/output CACHE PATH "Path for libraries")
 SET(BUILD_DOCUMENTATION ON)
@@ -10,6 +12,7 @@ SET(DEBUG ON)
 INCLUDE(${PROJECT_SOURCE_DIR}/cmake/TARGET.cmake)
 
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${DEBUG_CFLAGS}")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${DEBUG_CFLAGS} -fno-rtti -fno-exceptions")
 
 IF(IOS)
 SET(BUILD_SHARED_LIBS OFF)
@@ -25,50 +28,53 @@ ENDIF(ANDROID)
 
 STRING (REGEX REPLACE "/RTC(su|[1su])" "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
 
+SET( TARBALLS_DIR ${PROJECT_SOURCE_DIR}/3dparty/tarballs )
 SET( libev_include_dir ${PROJECT_SOURCE_DIR}/3dparty/libev )
 set( include_top_dir ${PROJECT_SOURCE_DIR} )
-#set( include_contrib_dir ${PROJECT_SOURCE_DIR}/target/include )
+set( include_contrib_dir ${LIBRARY_OUTPUT_DIR}/include )
 set( lib_contrib_dir ${LIBRARY_OUTPUT_PATH} )
+set( lib_contrib_dir2 ${LIBRARY_OUTPUT_PATH}/lib )
 
 INCLUDE(${PROJECT_SOURCE_DIR}/INCLUDES.cmk)
 
 set(PLUGINS_DIR ${CMAKE_INSTALL_PREFIX}/lib/xmppbot/plugins)
 
-INCLUDE ( CheckIncludeFiles )
-INCLUDE ( ExternalProject )
-INCLUDE ( Documentation )
+INCLUDE( CheckIncludeFiles )
+INCLUDE( ExternalProject )
+INCLUDE( Documentation )
 
-find_package( Threads )
+FIND_PACKAGE( Threads )
 set(CORELIBS ev ${CMAKE_THREAD_LIBS_INIT})
 
 IF(DOXYGEN_FOUND)
-	SET(DOXYGEN_INPUT ${CMAKE_CURRENT_SOURCE_DIR})
+    SET(XMPPBOT_DOC_DIR ${LIBRARY_OUTPUT_PATH}/Documentation)
+    SET(DOXYGEN_INPUT ${CMAKE_CURRENT_SOURCE_DIR}/xwlib/x_obj.h\ ${CMAKE_CURRENT_SOURCE_DIR}/xwlib/x_obj.c)
 	CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile)
     ADD_CUSTOM_TARGET(doc COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile)
- ELSE(DOXYGEN_FOUND)
+ELSE(DOXYGEN_FOUND)
     MESSAGE(STATUS "WARNING: Doxygen not found - Reference manual will not be created")
 ENDIF(DOXYGEN_FOUND)
 
-#ExternalProject_Add( openssl
-#    DOWNLOAD_DIR ${PROJECT_SOURCE_DIR}/downloads
-#    URL http://openssl.org/source/openssl-1.0.0c.tar.gz
-#    PATCH_COMMAND patch -p1 <
-#${PROJECT_SOURCE_DIR}/downloads/openssl-1.0.0c.patch
-#    CONFIGURE_COMMAND ""
-#    BUILD_COMMAND ${CMAKE_COMMAND} -DWINST_DIR=${PROJECT_SOURCE_DIR}
-#-DOPENSSL_SOURCE_DIR=${PROJECT_BINARY_DIR}/openssl/src/openssl/
-#-DOPENSSL_GENASM_COMMAND=${OPENSSL_GENASM_COMMAND}
-#-DOPENSSL_CONFIGURE_COMMAND=${OPENSSL_CONFIGURE_COMMAND}
-#-DOPENSSL_BUILD_COMMAND=${OPENSSL_BUILD_COMMAND}
-#-DOPENSSL_INSTALL_COMMAND="${OPENSSL_BUILD_COMMAND} install" -P
-#${PROJECT_SOURCE_DIR}/configure-openssl.cmake
-#    BUILD_IN_SOURCE 1
-#    )
+INCLUDE_DIRECTORIES(${LIBRARY_OUTPUT_PATH}/include)
 
-
-CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/config.h)
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${LIBRARY_OUTPUT_PATH}/include/xbot_config.h)
 
 add_subdirectory( 3dparty )
+
+IF(NOT LINUX)
+add_library(ssl STATIC IMPORTED)
+set_property(TARGET ssl PROPERTY IMPORTED_LOCATION ${LIBRARY_OUTPUT_PATH}/lib/libssl.a)
+
+add_library(crypto STATIC IMPORTED)
+set_property(TARGET crypto PROPERTY IMPORTED_LOCATION ${LIBRARY_OUTPUT_PATH}/lib/libcrypto.a)
+ENDIF(NOT LINUX)
+
+add_library(ogg STATIC IMPORTED)
+set_property(TARGET ogg PROPERTY IMPORTED_LOCATION ${LIBRARY_OUTPUT_PATH}/lib/libogg.a)
+
+
+
+
 add_subdirectory( xwlib )
 add_subdirectory( xwlib++ )
 #IF(NOT APPLE)
@@ -77,9 +83,9 @@ add_subdirectory( xwlib++ )
 #add_subdirectory( xilib )
 add_subdirectory( plugins )
 add_subdirectory( examples )
-IF (ANDROID)
+IF (ANDROID AND NOT LINUX )
 add_subdirectory( jni )
-ENDIF (ANDROID)
+ENDIF (ANDROID AND NOT LINUX )
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
 
@@ -103,17 +109,27 @@ ENDIF(ANDROID)
 SET_TARGET_PROPERTIES(xparser PROPERTIES COMPILE_FLAGS "${CMAKE_C_FLAGS}")
 #SET_TARGET_PROPERTIES(xmppbot PROPERTIES COMPILE_FLAGS "${CMAKE_C_FLAGS}")
 
-add_dependencies(xbus ev xparser)
+add_dependencies(xbus ev xparser xw)
 add_dependencies(xw ev xofactory)
 add_dependencies(xw++ xw)
+
+IF(NOT BUILD_SHARED_LIBS)
+add_dependencies(sessions xw)
+add_dependencies(core xw xbus sessions discovery bind auth_plain)
+add_dependencies(jingle sessions)
+add_dependencies(ibshell sessions)
+add_dependencies(xwcrypt xofactory)
+add_dependencies(xmppbot xwcrypt core ibshell jingle evtdomain)
+ENDIF(NOT BUILD_SHARED_LIBS)
 
 target_link_libraries( xbus ${GLOBAL_COMMON_LIBS}  ev xw xofactory xparser)
 target_link_libraries( xparser ${GLOBAL_COMMON_LIBS}  xw)
 
-target_link_libraries(xmppbot ${GLOBAL_COMMON_LIBS} ${CORELIBS} xw xofactory )
+target_link_libraries(xmppbot ${GLOBAL_COMMON_LIBS} ${CORELIBS} xw xofactory sessions )
 
 IF(UNIX)
 IF(IOS)
+target_link_libraries( xmppbot ${GLOBAL_COMMON_LIBS} ${CORELIBS} xw xofactory)
 ELSE(IOS)
 target_link_libraries( xmppbot ${GLOBAL_COMMON_LIBS} ${CORELIBS} xw xofactory dl )
 ENDIF(IOS)

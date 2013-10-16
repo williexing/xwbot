@@ -31,8 +31,9 @@
 #include <xwlib/x_lib.h>
 #include <xwlib/x_types.h>
 
-static const char const b64dict[] =
+static char const b64dict[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
 static int nbytes[] =
   { 3, 1, 1, 2 };
 static unsigned char out[4] =
@@ -157,18 +158,33 @@ x_base64_encode(char *str, int len)
   return ret;
 }
 
+static char const hexcmap[] = "0123456789abcdef";
+
 char *
 bin2hex(char *buf, int len)
 {
-  int i;
-  char *hex = (char *)x_malloc(len * 2 + 1);
-  if (!hex)
+    int i;
+    char c1,c2;
+    char *hex = NULL;
+
+    hex = (char *)x_malloc(len * 2 + 1);
+    if (!hex)
+    {
+        printf("ERROR!! Fatal len(%d)\n",len);
+        return hex;
+    }
+
+    for (i = 0; i < len; i++)
+    {
+        c1 = (char)((buf[i] >> 4) & 0xf);
+        c2 = (char)(buf[i] & 0xf);
+
+        hex[2*i] = hexcmap[c1];
+        hex[2*i + 1] = hexcmap[c2];
+    }
+
+    hex[len * 2] = '\0';
     return hex;
-
-  for (i = 0; i < len; ++i)
-    x_snprintf(hex + i * 2, 3, "%02x", (char) buf[i]);
-
-  return hex;
 }
 
 /**
@@ -191,7 +207,7 @@ hex2bin(const char *hex, int *len)
 
   l /= 2;
 
-  buf = malloc(l);
+  buf = x_malloc(l);
   if (!buf)
     return (void *) NULL;
 

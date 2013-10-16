@@ -42,7 +42,7 @@
 # ifdef EV_CONFIG_H
 #  include EV_CONFIG_H
 # else
-#  include "config.h"
+#  include <ev_config.h>
 # endif
 
 #if HAVE_FLOOR

@@ -6,7 +6,11 @@
  */
 
 #undef DEBUG_PRFX
+#include <x_config.h>
+#if TRACE_XMPPSASL_ON
 #define DEBUG_PRFX "[sasl] "
+#endif
+
 #include <xwlib/x_types.h>
 
 #include <xmppagent.h>
@@ -77,7 +81,7 @@ sasl_exit(x_object *o)
   const char *xmlns;
   ENTER;
 
-  printf("%s:%s():%d\n",__FILE__,__FUNCTION__,__LINE__);
+  TRACE("%s:%s():%d\n",__FILE__,__FUNCTION__,__LINE__);
 
   xmlns = x_object_getattr(o, "xmlns");
   if (!xmlns)
@@ -88,13 +92,13 @@ sasl_exit(x_object *o)
 
   if (EQ(x_object_get_name(o), "success"))
     {
-      x_bus_reset((struct x_bus *) o->bus);
+      x_bus_reset_stream((struct x_bus *) o->bus);
     }
   else if (EQ(x_object_get_name(o), "failure"))
     {
 #pragma message("Fixme! Filed auth mechanism")
       TRACE("Authentication ERROR!\n");
-      x_bus_reset((struct x_bus *) o->bus);
+      x_bus_reset_stream((struct x_bus *) o->bus);
     }
   else
     {
@@ -152,7 +156,7 @@ sasl_features_init(void)
   sasl_class.on_remove = &sasl_remove;
   sasl_class.on_release = &sasl_release;
   sasl_class.on_assign = &sasl_assign;
-  sasl_class.finalize = &sasl_exit;
+  sasl_class.commit = &sasl_exit;
   sasl_class.classmatch = &sasl_class_match;
 
   x_class_register_ns(sasl_class.cname, &sasl_class,

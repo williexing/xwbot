@@ -164,7 +164,7 @@ xmppstream_init(void)
   stream_class.on_remove = &stream_remove;
   stream_class.on_release = &stream_release;
   stream_class.on_assign = &stream_assign;
-  stream_class.finalize = stream_exit;
+  stream_class.commit = stream_exit;
   x_class_register_ns(stream_class.cname, &stream_class, "http://etherx.jabber.org/streams");
   EXIT;
   return;

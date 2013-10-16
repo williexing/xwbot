@@ -65,7 +65,7 @@ x_vpx_decoder_decode(vpx_dec_ctx_t *_decoder, const char *buffer, size_t bufsiz)
 #endif
 
 int
-x_vpx_decoder_init(vpx_dec_ctx_t *_decoder, int numcores)
+x_vpx_decoder_init(vpx_codec_ctx_t *_decoder, int numcores)
 {
   vpx_codec_dec_cfg_t cfg;
   vpx_codec_flags_t flags = 0;
@@ -195,7 +195,7 @@ x_vpx_encoder_init(vpx_codec_ctx_t *_p_encoder, int numcores, int width,
   return 0;
 }
 
-#define MTU 1492
+#define MTU 1300
 
 static int
 x_vp8_rtp_send(int fd, const void *buf, int count, struct sockaddr *saddr,
@@ -316,7 +316,7 @@ x_vpx_enc_run(unsigned char *pixels, int w, int h, int sock,
   int p1y = 0;
   void *dat;
   vpx_codec_ctx_t _encoder;
-  vpx_dec_ctx_t _decoder;
+  vpx_codec_ctx_t _decoder;
   vpx_image_t raw_yuv;
   const vpx_codec_cx_pkt_t *pkt;
   int frame_cnt = 0;

@@ -13,6 +13,8 @@
 #include <stdio.h>
 #include <time.h>
 #include <errno.h>
+#include <netdb.h>
+#include <ctype.h>
 
 #undef DEBUG_PRFX
 
@@ -144,9 +146,10 @@ struct sockaddr **
 __x_bus_get_local_addr_list2(void)
 {
   struct sockaddr **addrarray;
-  struct addrinfo hints;
-  struct addrinfo *res, *_res;
-  char myhostname[128];
+  char *ptr;
+//  struct addrinfo hints;
+//  struct addrinfo *res, *_res;
+//  char myhostname[128];
   int family, s;
 
   struct ifaddrs *ifaddr, *ifa = NULL;
@@ -158,7 +161,7 @@ __x_bus_get_local_addr_list2(void)
 
   ENTER;
 
-  ifaddr = NULL;
+  TRACE("ENTER\n");
 
   err = getifaddrs(&ifaddr);
   BUG_ON(err);
@@ -168,7 +171,7 @@ __x_bus_get_local_addr_list2(void)
       goto ADDRLIST2_EXIT;
     }
 
-  printf("1: ifaddr=%p\n", ifaddr);
+  TRACE("1: ifaddr=%p\n", ifaddr);
 
   for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next)
     {
@@ -195,39 +198,40 @@ __x_bus_get_local_addr_list2(void)
               exit(EXIT_FAILURE);
             }
 
-          printf("\taddress: <%s>\n", host);
+          TRACE("\taddress: <%s>\n", host);
         }
     }
 
-  printf("Found %d addresses\n", numaddr);
+  TRACE("Found %d addresses\n", numaddr);
 
-  addrarray = x_malloc(
+  addrarray = (struct sockaddr **)x_malloc(
       sizeof(struct sockaddr *) * (numaddr + 1)
           + sizeof(struct sockaddr) * (numaddr + 1));
 
   addrarray[numaddr] = 0; /* terminator */
+  ptr = (char *)&addrarray[numaddr + 1];
 
-  for (ifa = ifaddr; ifa != NULL && i < numaddr; ifa = ifa->ifa_next)
+  for (ifa = ifaddr, i=0; ifa != NULL && i < numaddr; ifa = ifa->ifa_next)
     {
       family = ifa->ifa_addr->sa_family;
       if (family == AF_INET || family == AF_INET6)
         {
-          addrarray[i] = (struct sockaddr *) &addrarray[numaddr + 2]
-              + i * sizeof(struct sockaddr);
+          addrarray[i] = (struct sockaddr *)(
+                      ((unsigned long long)ptr)
+                     + i * sizeof(struct sockaddr));
           x_memcpy(addrarray[i], (void *) ifa->ifa_addr,
               sizeof(struct sockaddr));
           i++;
         }
     }
 
-  printf("2: Freeing address list: %p\n", ifaddr);
+  TRACE("2: Freeing address list: %p\n", ifaddr);
 
   freeifaddrs(ifaddr);
 
   EXIT;
-  printf("2: returning...\n");
-  ADDRLIST2_EXIT:
-    return addrarray;
+  TRACE("2: returning...\n");
+  ADDRLIST2_EXIT: return addrarray;
 }
 #endif /* ANDROID */
 
@@ -247,20 +251,26 @@ __x_bus_get_local_addr_list(void)
 
   ENTER;
 
-  gethostname(myhostname, sizeof(myhostname)- 1);
+  gethostname(myhostname, sizeof(myhostname) - 1);
 
   TRACE("Determining local IPs for %s...\n", myhostname);
 
-  memset(&hints, 0, sizeof( struct addrinfo));
+  x_memset(&hints, 0, sizeof(struct addrinfo));
   /* set-up hints structure */
   hints.ai_family = AF_INET;
   hints.ai_socktype = SOCK_DGRAM;
+#ifdef ANDROID
+  hints.ai_flags = AI_CANONNAME | AI_ADDRCONFIG;
+#else
   hints.ai_flags = AI_CANONNAME | AI_ADDRCONFIG | AI_V4MAPPED;
+#endif
 
+  TRACE("Determining local IPs for %s (flags[0x%x])...\n",
+      myhostname, hints.ai_flags);
   err = getaddrinfo(myhostname, NULL, &hints, &_res);
   if (err)
     {
-      gai_strerror(err);
+      TRACE("ERROR!: %s\n", gai_strerror(err));
     }
   else
     {
@@ -293,13 +303,18 @@ __x_bus_get_local_addr_list(void)
 
       addrarray = x_malloc(
           sizeof(struct sockaddr *) * (numaddr + 1)
-              + sizeof(struct sockaddr) * numaddr);
+              + sizeof(struct sockaddr) * (numaddr + 1));
+
       addrarray[numaddr] = 0; /* terminator */
+
+      TRACE("Found %d network addresses\n", numaddr);
 
       for (res = _res; res; res = res->ai_next)
         {
           for (i = 0; i < numaddr; i++)
             {
+              TRACE("Ifnum %d: %s\n",
+                  i, inet_ntoa(((struct sockaddr_in *)res->ai_addr)->sin_addr));
               addrarray[i] = (struct sockaddr *) &addrarray[numaddr + 1]
                   + i * sizeof(struct sockaddr);
               x_memcpy(addrarray[i], (void *) res->ai_addr,
@@ -307,10 +322,13 @@ __x_bus_get_local_addr_list(void)
             }
 
         }
+
+      TRACE("Freeing addrinfo list...\n");
       freeaddrinfo(_res);
     }
 
   EXIT;
+  TRACE("Ok!\n");
   return addrarray;
 }
 #endif /* WIN32 */
@@ -422,13 +440,10 @@ delattr(KEY k, x_obj_attr_t *head)
 {
   x_obj_attr_t *p = NULL, *prev = NULL;
 
-  for (p = head->next; p; prev = p, p = p->next)
+  for (p = head->next, prev = head; p; prev = p, p = p->next)
     if (EQKEY(p->key, k))
       {
-        if (prev)
-          prev->next = p->next;
-        else
-          head->next = NULL;
+        prev->next = p->next;
 
         FREEVAL(p->val);
         FREEKEY(p->key);
@@ -443,16 +458,23 @@ attr_list_clear(x_obj_attr_t *head)
 {
   x_obj_attr_t *p, *_p;
 
-  for (p = head->next, head->next = NULL; p;)
+  p = head->next;
+  head->next = NULL;
+  
+  for (; p;)
     {
       _p = p->next;
       if (p->val)
+      {
         FREEVAL(p->val);
-
+      }
+      
       if (p->key)
+      {
         FREEKEY(p->key);
-
-      x_free(p);
+      }
+      
+      x_free(p);      
       p = _p;
     }
 
@@ -545,6 +567,30 @@ ht_get(KEY key, struct ht_cell **hashtable, int *indx)
   for (p = hashtable[*indx]; p; p = p->next)
     {
       if (EQKEY(p->key, key))
+        return p->val;
+    }
+
+  return NULL;
+}
+
+/* ht_get value by key from hashtable (ignore key case) */
+VAL
+ht_lowcase_get(KEY key, struct ht_cell **hashtable, int *indx)
+{
+  struct ht_cell *p;
+  char buf[512] = {0};
+  char *_b = buf;
+
+  while(*key) *_b++ = tolower(*key++);
+  *_b = '\0';
+
+  /* pointer must be valid */
+  /*assert(indx != NULL);*/
+  *indx = ht_hash(buf);
+
+  for (p = hashtable[*indx]; p; p = p->next)
+    {
+      if (EQ(p->key, buf))
         return p->val;
     }
 

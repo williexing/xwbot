@@ -496,7 +496,7 @@ get_stun_simple_request(void)
   return stn_req;
 }
 
-EXPORT_SYMBOL stun_hdr_t *
+stun_hdr_t *
 get_stun_full_request(const char *lufrag,
     const char *rufrag, const char *rpwd)
 {
@@ -516,7 +516,7 @@ get_stun_full_request(const char *lufrag,
   if (!lufrag || !rufrag || !rpwd)
     return NULL;
 
-  sprintf(fullfrag, "%s:%s", rufrag, lufrag);
+  x_sprintf(fullfrag, "%s:%s", rufrag, lufrag);
 
   stn_pkt = stun_pkt_new();
   stun_set_attr_d(stn_pkt, STUN_PRIORITY, 4, (char *) &stn_pkt);
@@ -551,6 +551,59 @@ get_stun_full_request(const char *lufrag,
   EXIT;
   return stn_req;
 }
+
+stun_hdr_t *
+get_stun_full_request2(const char *username, const char *password)
+{
+  int i;
+  uint32_t crc;
+  char *ptr;
+  stun_hdr_t *stn_req = NULL;
+  stun_packet_t *stn_pkt = NULL;
+  unsigned long int val;
+
+  ENTER;
+
+  TRACE("Generating stun packet for "
+  "username(%s),password(%s)\n", username, password);
+
+  if (!username || !password)
+    return NULL;
+
+  stn_pkt = stun_pkt_new();
+  stun_set_attr_d(stn_pkt, STUN_PRIORITY, 4, (char *) &stn_pkt);
+  val = random();
+  stun_set_attr_d(stn_pkt, STUN_ICE_CONTROLLED, 8, (char *) &val);
+  stun_set_attr_d(stn_pkt, STUN_USERNAME, strlen(username), (char *) username);
+
+  stn_req = stun_hdr_from_packet(stn_pkt);
+
+  stn_req->mcookie = STUN_NET_M_COOKIE;
+  stn_req->ver_type.raw = htons(STUN_REQ);
+  // set transction id
+  x_snprintf(stn_req->trans_id, sizeof(stn_req->trans_id), "%12d",
+      (int) random());
+  stn_req = stun_add_integrity(stn_req, password);
+
+  // add CRC32
+  i = ntohs(stn_req->mlen) + sizeof(stun_hdr_t);
+  stn_req = x_realloc(stn_req, i + 8);
+  stn_req->mlen = htons(i + 8 - sizeof(stun_hdr_t));
+  crc = stun_get_fingerprint(stn_req);
+
+  ptr = (char *) stn_req + i;
+  *(uint16_t *) ptr = htons(STUN_FINGERPRINT);
+  ptr += sizeof(uint16_t);
+  *(uint16_t *) ptr = htons(4);
+  ptr += sizeof(uint16_t);
+  *(uint32_t *) ptr = htonl(crc ^ STUN_FINGERPRINT_XOR);
+
+  stun_pkt_free(stn_pkt);
+
+  EXIT;
+  return stn_req;
+}
+
 
 static void UNUSED
 hexdump(char *buf, int len)

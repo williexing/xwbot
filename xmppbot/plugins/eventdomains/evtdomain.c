@@ -63,8 +63,8 @@ evtdomain_worker(void *ctx)
 
   do
     {
-      /*ev_loop(evo->eventloop, EVLOOP_NONBLOCK);*/
-      ev_loop(evo->eventloop, 0);
+      ev_loop(evo->eventloop, EVLOOP_NONBLOCK);
+//      ev_loop(evo->eventloop, 0);
     }
   while (!(evo->regs.cr0 & (1 << 0)) /* thread stop condition!!! */);
 

@@ -31,6 +31,21 @@ typedef tlv_t *p_tlv_t;
         (void *)((char *)(ptr)  -                                       \
                  ((char *)&(sample)->member - (char *)(sample)))
 
+typedef struct gobee_img_plane
+{
+    /**The width of this plane.*/
+    int width;
+    /**The height of this plane.*/
+    int height;
+    /**The offset in bytes between successive rows.*/
+    int stride;
+    /**A pointer to the beginning of the first row.*/
+    unsigned char *data;
+} gobee_img_plane_t;
+
+typedef gobee_img_plane_t gobee_img_frame_t[3];
+
+
 /**
  * DOUBLE LINKED LIST API
  * @defgroup LIST_API Linked list API
@@ -64,6 +79,31 @@ EXPORT_SYMBOL int xw_list_is_empty(struct list_entry *e);
  */
 
 /**
+ * CIRCULAR BUFFER API
+ * @defgroup CIRCBUF_API Circular buffer API
+ *
+ * @{
+ */
+typedef struct x_circbuf
+{
+  int rcnt;
+  int wcnt;
+  uint8_t *start;
+  uint8_t *end;
+  uint8_t *head;
+  uint8_t *tail;
+} circular_buffer_t;
+
+EXPORT_SYMBOL void circbuf_init(circular_buffer_t *cb, int size);
+EXPORT_SYMBOL void circbuf_deinit(circular_buffer_t *cb);
+EXPORT_SYMBOL int circbuf_write(circular_buffer_t *cb, const uint8_t *data, int size);
+EXPORT_SYMBOL int circbuf_read(circular_buffer_t *cb, uint8_t *data, int size);
+EXPORT_SYMBOL int circbuf_length(circular_buffer_t *cb);
+/**
+ * @}
+ */
+  
+/**
  * HASH TABLE API
  *
  * @defgroup HT_API Hash table API
@@ -81,8 +121,8 @@ EXPORT_SYMBOL int xw_list_is_empty(struct list_entry *e);
 #endif
 #define NEQ(s1, s2)   (x_strcasecmp(s1, s2) != 0)
 #define EQKEY(s1, s2)   (x_strcmp(s1, s2) == 0)
-#define FREEKEY(s)      x_free(s)
-#define FREEVAL(s)      x_free(s)
+#define FREEKEY(s)      do { x_free(s); s = NULL; } while (0)
+#define FREEVAL(s)      do { x_free(s); s = NULL; } while (0)
 #define SETVAL(at,s)    (at = x_strdup(s))
 #define SETKEY(at,s)    (at = x_strdup(s))
 #define KEYFMT          "key:   %s"
@@ -92,6 +132,7 @@ struct ht_cell **ht_create_table(void);
 int ht_hash(KEY key);
 struct ht_cell *ht_get_cell(KEY key, struct ht_cell **hashtable, int *indx);
 EXPORT_SYMBOL VAL ht_get(KEY key, struct ht_cell **hashtable, int *indx);
+EXPORT_SYMBOL VAL ht_lowcase_get(KEY key, struct ht_cell **hashtable, int *indx);
 EXPORT_SYMBOL void ht_set(KEY key, VAL val, struct ht_cell **hashtable);
 int ht_del(KEY key, struct ht_cell **hashtable);
 struct ht_cell *ht_next(struct ht_celliter *ci, struct ht_cell **hashtable);
@@ -160,6 +201,10 @@ EXPORT_SYMBOL int set_sock_to_non_blocking (int s);
 EXPORT_SYMBOL int unset_sock_to_non_blocking (int s);
 
 EXPORT_SYMBOL int x_thread_run(THREAD_T *,t_func, void *);
+
+
+#define X_PRIV_STR_MODE "$mode"
+#define X_PRIV_STR_WIDTH "width"
 
 #ifdef __cplusplus
 }

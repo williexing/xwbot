@@ -29,6 +29,7 @@
 
 #define GTALK_HOSTNAME "talk.google.com"
 #define VK_HOSTNAME "vkmessenger.ru"
+#define QIP_HOSTNAME "xmpp-server.qip.ru"
 
 #ifdef __cplusplus
 extern "C" {
@@ -98,7 +99,7 @@ enum
  * @{
  */
 EXPORT_SYMBOL int x_bus_write(struct x_bus *, void *, size_t, int);
-EXPORT_SYMBOL void x_bus_reset(struct x_bus *bus);
+EXPORT_SYMBOL void x_bus_reset_stream(struct x_bus *bus);
 EXPORT_SYMBOL void x_bus_set_transport(struct x_bus *bus, struct x_transport *t);
 /**
  * @}

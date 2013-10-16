@@ -145,15 +145,18 @@ x_local_malloc(size_t _siz)
   void *p;
   int siz = X_STR_MEMLEN_ALIGN(_siz);
 
+#ifdef LOG_MEMUSE
 #if !defined(ANDROID) && !defined (IOS)
   if (mfd)
     {
       fprintf(mfd, "%d : > M: (%d)->(%d)\n", GETTID, _siz, siz);
     }
 #endif
+#endif
 
   p = malloc(siz);
 
+#ifdef LOG_MEMUSE
 #if !defined(ANDROID) && !defined (IOS)
   if (!mfd)
     {
@@ -161,6 +164,7 @@ x_local_malloc(size_t _siz)
       mfd = fopen("memuse.log", "w+");
     }
   fprintf(mfd, "%d : M:%p:%d\n", GETTID, p, _siz);
+#endif
 #endif
 
   return p;
@@ -172,32 +176,40 @@ x_local_realloc(void *p, size_t _siz)
   void *_p;
   int siz = X_STR_MEMLEN_ALIGN(_siz);
 
+#ifdef LOG_MEMUSE
 #if !defined(ANDROID) && !defined (IOS)
   if (mfd)
     {
       fprintf(mfd, "%d : > R: (%p:%d)->(%d)\n", GETTID, p, _siz, siz);
     }
 #endif
+#endif
 
   _p = realloc(p, siz);
+
+#ifdef LOG_MEMUSE
 #if !defined(ANDROID) && !defined (IOS)
   if (mfd)
     {
       fprintf(mfd, "%d : R:%p:%p:%d\n", GETTID, p, _p, siz);
     }
 #endif
+#endif
+
   return _p;
 }
 
 EXPORT_SYMBOL void
 x_local_free(void *p)
 {
+#ifdef LOG_MEMUSE
 #if !defined(ANDROID) && !defined (IOS)
   if (mfd)
     {
       fprintf(mfd, "%d : F:%p\n", GETTID, p);
       fflush(mfd);
     }
+#endif
 #endif
 
   BUG_ON(!p);

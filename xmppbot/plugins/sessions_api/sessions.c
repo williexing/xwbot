@@ -6,7 +6,7 @@
  */
 
 #undef DEBUG_PRFX
-#include <xwlib/x_config.h>
+#include <x_config.h>
 #if TRACE_XSESSIONS_ON
 #define DEBUG_PRFX "[sessions] "
 #endif
@@ -18,15 +18,23 @@
 #include <xmppagent.h>
 #include "sessions.h"
 
+#if 0 // FIXME delete me
 #if defined(ANDROID)
 #define SESSION_WORKING_DIRECTORY "/data/data/com.xw"
 #else
 #define SESSION_WORKING_DIRECTORY "/tmp"
 #endif
+#endif
 
-#define CHANNEL_STATE_TRANSPORT_READY 0x1
-#define CHANNEL_STATE_MEDIA_READY 0x2
-#define CHANNEL_STATE_READY 0x3
+/*
+  This object generates messages:
+
+    "session-activate",
+    "session-destroy",
+    "candidate-new",
+    //"channel-ready"
+
+  */
 
 /*********************************/
 /*********************************/
@@ -37,7 +45,7 @@
 static BOOL
 session_equals(x_object *o, x_obj_attr_t *attrs)
 {
-  const char *sida, *sido;
+   const char *sida, *sido;
   ENTER;
 
   if (!attrs)
@@ -65,6 +73,77 @@ session_equals(x_object *o, x_obj_attr_t *attrs)
   return TRUE;
 }
 
+static void
+__idle_task  (xevent_dom_t *loop, struct ev_idle *w, int revents)
+{
+//    sched_yield();
+    usleep(100);
+}
+
+static void *
+__session_worker(void *thiz_)
+{
+    struct ev_idle idle_watcher;
+    x_object *thiz = (x_object *)thiz_;
+  ENTER;
+
+  TRACE("Started new thread\n");
+
+  _REFGET(thiz);
+
+  ev_idle_init (&idle_watcher, &__idle_task);
+  ev_idle_start (thiz->loop, &idle_watcher);
+
+#ifndef __DISABLE_MULTITHREAD__
+  if (thiz->loop)
+  {
+      do
+      {
+//          ev_loop(thiz->loop, 0);
+            ev_loop(thiz->loop, EVLOOP_NONBLOCK);
+      }
+      while ((thiz->cr & (1 << 1)) /* thread stop condition!!! */);
+  }
+#endif
+
+  _REFPUT(thiz,NULL);
+
+  EXIT;
+  return NULL;
+}
+
+
+
+static x_object *
+session_assign(x_object *thiz, x_obj_attr_t *attrs)
+{
+    x_object *msg;
+    x_string_t statestr;
+    x_common_session *xcs = (x_common_session *) thiz;
+
+    x_object_default_assign_cb(thiz,attrs);
+
+    if ((statestr=getattr("$state",attrs)) != NULL
+            && EQ(statestr,_XS("active")))
+    {
+        /* start working thread */
+        thiz->cr |= (1 << 1);
+
+        //        x_thread_run(&o->looptid,__session_worker,o);
+        if(x_thread_run(&thiz->looptid,__session_worker, (void *) xcs) != 0)
+            thiz->cr &= ~(1 << 1); // started state
+
+        xcs->state = SESSION_ACTIVE;
+        msg = _GNEW("$message",NULL);
+        _ASET(msg,_XS("subject"),_XS("session-activate"));
+        _ASET(msg, _XS("sid"), _AGET(thiz,_XS("sid")));
+        _MCAST(thiz, msg);
+        _REFPUT(msg, NULL);
+    }
+
+    return thiz;
+}
+
 static int
 session_tx(x_object *to, x_object *o, x_obj_attr_t *ctx_attrs)
 {
@@ -77,29 +156,87 @@ session_tx(x_object *to, x_object *o, x_obj_attr_t *ctx_attrs)
   subj = _AGET(o, "subject");
   TRACE("---------------->>>>> '%s'\n", subj);
 
-  /*  if (EQ(_XS("channel-new"),subj))
-   {
-   _MCAST(to,o);
-   }
-   else */
+  /**
+    * just ignore messages on inactive sessions
+    */
+  if (xcs->state != SESSION_ACTIVE)
+  {
+    return -1;
+  }
+
   if (EQ(_XS("candidate-new"),subj))
     {
       _MCAST(to, o);
+      goto _endsession_;
     }
-  else if (EQ(_XS("channel-ready"),subj) && xcs->state == SESSION_NEW)
+
+#if 0
+  if (EQ(_XS("channel-ready"),subj) && xcs->state == SESSION_NEW)
     {
       _ASET(o, _XS("sid"), _AGET(to,"sid"));
       TRACE("_MCAST: ------------>>>>> '%s', %p next listener = %p(%s)\n",
-          subj, to, to->listeners.next->key,
-          (to->listeners.next) ? _GETNM(to->listeners.next->key) : "(nil)");
+          subj, to, to->listeners.next->key, (to->listeners.next) ? _GETNM(to->listeners.next->key) : "(nil)");
+      _MCAST(to, o);
+    }
+  else
+#endif
+    {
       _MCAST(to, o);
     }
 
+_endsession_:
   /* drop message */
   _REFPUT(o, NULL);
 
   EXIT;
   return err;
+}
+
+static void  session_remove(x_object *o)
+{
+    x_object *msg;
+//    x_common_session *xcs = (x_common_session *) o;
+    printf("%s:%s():%d\n",__FILE__,__FUNCTION__,__LINE__);
+
+    if(o->loop)
+    {
+        ev_unloop(o->loop, EVUNLOOP_ALL);
+        o->cr &= ~((uint32_t) (1 << 1));
+        pthread_join(o->looptid,NULL);
+    }
+
+    msg = _GNEW("$message",NULL);
+    _ASET(msg,_XS("subject"),_XS("session-destroy"));
+    _ASET(msg, _XS("sid"), _AGET(o,_XS("sid")));
+    _MCAST(o, msg);
+    _REFPUT(msg, NULL);
+}
+
+static void
+session_release(x_object *o)
+{
+//    x_object *msg;
+////    x_common_session *xcs = (x_common_session *) o;
+//    printf("%s:%s():%d\n",__FILE__,__FUNCTION__,__LINE__);
+//    msg = _GNEW("$message",NULL);
+//    _ASET(msg,_XS("subject"),_XS("session-destroy"));
+//    _ASET(msg, _XS("sid"), _AGET(o,_XS("sid")));
+//    _MCAST(o, msg);
+//    _REFPUT(msg, NULL);
+    ev_loop_destroy(o->loop);
+    o->loop = NULL;
+}
+
+static int
+session_append(x_object *thiz, x_object *parent)
+{
+    ENTER;
+
+    thiz->loop = ev_loop_new(EVFLAG_AUTO);
+//        thiz->loop = ev_default_loop(EVFLAG_AUTO);
+
+    EXIT;
+    return 0;
 }
 
 static struct xobjectclass __isession_objclass;
@@ -114,189 +251,14 @@ __isession_init(void)
       - sizeof(x_object));
   __isession_objclass.match = &session_equals;
   __isession_objclass.tx = &session_tx;
+  __isession_objclass.on_release = &session_release;
+//  __isession_objclass.on_remove = &session_remove;
+  __isession_objclass.on_tree_destroy = &session_remove;
+  __isession_objclass.on_assign = &session_assign;
+  __isession_objclass.on_append = &session_append;
   x_class_register_ns(__isession_objclass.cname, &__isession_objclass,
       "jingle");
   EXIT;
   return;
 }
 PLUGIN_INIT(__isession_init);
-
-/* matching function */
-static BOOL
-iostream_equals(x_object *chan, x_obj_attr_t *attrs)
-{
-  const char *nama, *namo;
-  ENTER;
-
-  if (!attrs)
-    return FALSE;
-
-  nama = getattr("name", attrs);
-  namo = _AGET(chan, "name");
-
-  if ((nama && namo && NEQ(nama,namo)) || ((nama || namo) && !(nama && namo)))
-    {
-      TRACE("EXIT Not EQUAL '%s'!='%s'\n", nama, namo);
-      return FALSE;
-    }
-
-  return TRUE;
-}
-
-/**
- * @todo Possibly when passing messages through \
-multiple objects each of them should add their own \
-attributes in plain mode and not hierarchical ??! \
-This will allow fast detection of message recipient objects.
- *
- */
-static int
-iostream_tx(x_object *chan, x_object *msg, x_obj_attr_t *ctx_attrs)
-{
-  int err;
-  ENTER;
-  /* act as message relay: set channel fields and pass
-   * message downstrem
-   */
-  _ASET(msg, "channel-name", _GETNM(chan));
-  err = x_object_send_down(_PARNT(chan), msg, NULL);
-
-  EXIT;
-
-  return err;
-}
-
-static void
-__iostream_on_child_append(x_object *chan, x_object *child)
-{
-  x_object *msg;
-  x_object *transport;
-  x_object *media;
-  x_string_t _chnam_ = _GETNM(child);
-  x_io_stream *stream_ = (x_io_stream *) chan;
-  x_obj_attr_t hints =
-    { 0, 0, 0, };
-
-  TRACE("-->> New child object appended '%s' <<--\n", _GETNM(child));
-#if 0
-  if ((stream_->regs.state & 0x3) != CHANNEL_STATE_READY)
-    {
-      transport = _CHLD(chan,_XS("transport"));
-      if (transport)
-      stream_->regs.state |= CHANNEL_STATE_TRANSPORT_READY;
-
-      media = _CHLD(chan,_XS("media"));
-      if (media)
-      stream_->regs.state |= CHANNEL_STATE_MEDIA_READY;
-
-      if (media && transport)
-        {
-          msg = _NEW(_XS("$message"),NULL);
-          _ASET(msg, _XS("subject"), _XS("channel-ready"));
-          _ASET(msg, _XS("chname"), _GETNM(chan));
-          x_object_send_down(_PARNT(chan), msg, &hints);
-        }
-    }
-#else
-
-  if ((stream_->regs.state & 0x3) == CHANNEL_STATE_READY)
-    return;
-
-  else if (_chnam_)
-    {
-      if (EQ(_chnam_,_XS("transport")))
-        {
-          stream_->regs.state |= CHANNEL_STATE_TRANSPORT_READY;
-        }
-      else if (EQ(_chnam_,MEDIA_IN_CLASS_STR))
-        {
-          stream_->regs.state |= CHANNEL_STATE_MEDIA_READY;
-        }
-      else if (EQ(_chnam_,MEDIA_OUT_CLASS_STR))
-        {
-          stream_->regs.state |= CHANNEL_STATE_MEDIA_READY;
-        }
-    }
-
-  if ((stream_->regs.state & 0x3) == CHANNEL_STATE_READY)
-    {
-      msg = _NEW(_XS("$message"),NULL);
-      _ASET(msg, _XS("subject"), _XS("channel-ready"));
-      _ASET(msg, _XS("chname"), _GETNM(chan));
-      TRACE ("CHANNEL READY '%s'\n",_GETNM(chan));
-      x_object_send_down(_PARNT(chan), msg, &hints);
-    }
-#endif
-}
-
-static x_object *
-iostream_on_assign(x_object *chan, x_obj_attr_t *attrs)
-{
-  x_object *tmpo;
-  const char *attr;
-
-  ENTER;
-
-  x_object_default_assign_cb(chan, attrs);
-
-  if ((attr = getattr("mtype", attrs)))
-    {
-      if (EQ(attr,_XS("video")))
-        {
-          tmpo = _NEW(_XS("video_player"),_XS("gobee:media"));
-          _SETNM(tmpo, _XS("dataplayer"));
-          _INS(chan, tmpo);
-
-          tmpo = _NEW(_XS("camera"),_XS("gobee:media"));
-          _SETNM(tmpo, _XS("datasrc"));
-          _INS(chan, tmpo);
-        }
-      else
-        if (EQ(attr,_XS("audio")))
-        {
-            tmpo = _NEW(_XS("audio_player"),_XS("gobee:media"));
-            _SETNM(tmpo, _XS("dataplayer"));
-            _INS(chan, tmpo);
-
-            tmpo = _NEW(_XS("microphone"),_XS("gobee:media"));
-            _SETNM(tmpo, _XS("datasrc"));
-            _INS(chan, tmpo);
-        }
-    }
-
-  EXIT;
-  return chan;
-}
-
-static
-void
-iostream_on_create(x_object *o)
-{
-  x_io_stream *stream_ = (x_io_stream *) o;
-  stream_->regs.state = 0;
-}
-
-static struct xobjectclass __iostream_objclass;
-__x_plugin_visibility
-__plugin_init void
-__iostream_init(void)
-{
-  ENTER;
-
-  __iostream_objclass.cname = X_STRING("__iostream");
-  __iostream_objclass.psize = (unsigned int) (sizeof(x_io_stream)
-      - sizeof(x_object));
-  __iostream_objclass.on_create = &iostream_on_create;
-  __iostream_objclass.match = &iostream_equals;
-  __iostream_objclass.on_child_append = &__iostream_on_child_append;
-  __iostream_objclass.tx = &iostream_tx;
-  __iostream_objclass.on_assign = &iostream_on_assign;
-
-  x_class_register_ns(__iostream_objclass.cname, &__iostream_objclass,
-      "jingle");
-
-  EXIT;
-  return;
-}
-PLUGIN_INIT(__iostream_init);
-

@@ -90,6 +90,8 @@ EXPORT_SYMBOL stun_hdr_t *
 get_stun_full_request(const char *local_ufrag, const char *remote_ufrag,
     const char *remote_pwd);
 EXPORT_SYMBOL stun_hdr_t *
+get_stun_full_request2(const char *username, const char *password);
+EXPORT_SYMBOL stun_hdr_t *
 stun_get_response(const char *stun_key, stun_hdr_t *req, struct sockaddr *saddr);
 EXPORT_SYMBOL void
 stun_pkt_free(stun_packet_t *pkt);

@@ -75,6 +75,18 @@ x_string_trunc(x_string *xstr)
 }
 
 /**
+ *
+ */
+void
+x_string_rew(x_string *xstr)
+{
+  ENTER;
+  xstr->pos = 0;
+  EXIT;
+  return;
+}
+
+/**
  * destructor
  */
 void

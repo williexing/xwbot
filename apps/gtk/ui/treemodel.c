@@ -1,6 +1,6 @@
 #undef DEBUG_PRFX
 
-#define DEBUG_PRFX "[TREE_MODEL] "
+//#define DEBUG_PRFX "[TREE_MODEL] "
 #include <xwlib/x_types.h>
 
 #include <xwlib/x_utils.h>
@@ -358,15 +358,15 @@ custom_list_get_iter(GtkTreeModel *tree_model, GtkTreeIter *iter,
     return FALSE;
 
 //  xobj = x_object_get_child_from_index(xobj, n + 1);
-  printf ("%s ",_GETNM(xobj));
+//  printf ("%s ",_GETNM(xobj));
 
   for (i = 0; i < depth && xobj; i++)
     {
       n = indices[i];
       xobj = x_object_get_child_from_index(xobj, n);
-      printf ("=> %s",xobj ? _GETNM(xobj) : "?");
+//      printf ("=> %s",xobj ? _GETNM(xobj) : "?");
     }
-  printf ("\n");
+//  printf ("\n");
 
 //  g_assert(xobj != NULL);
   if (!xobj)
@@ -856,7 +856,7 @@ custom_list_new(void)
 
   g_assert(newcustomlist != NULL);
 
-  newcustomlist->xobj = _NEW("__gtk_treemodel","gobee");
+  newcustomlist->xobj = _GNEW("__gtk_treemodel","gobee");
   newcustomlist->xobj->tmodel = newcustomlist;
   newcustomlist->rootobj = NULL;
 

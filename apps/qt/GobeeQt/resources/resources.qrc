@@ -1,0 +1,10 @@
+<RCC>
+    <qresource prefix="/">
+        <file>icons/OK.png</file>
+        <file>icons/Crystal_Clear_app_personal.png</file>
+        <file>icons/Crystal_Clear_talk.png</file>
+        <file>icons/Crystal_Clear_talk2.png</file>
+        <file>icons/disk_jockey_32.png</file>
+        <file>icons/disk_jockey_48.png</file>
+    </qresource>
+</RCC>

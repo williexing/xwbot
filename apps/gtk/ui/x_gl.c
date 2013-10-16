@@ -9,7 +9,7 @@
 #include <math.h>
 
 #undef DEBUG_PRFX
-#include <xwlib/x_config.h>
+#include <x_config.h>
 #if TRACE_VIRTUAL_DIPSLAY_ON
 #define TRACE_LEVEL 2
 #define DEBUG_PRFX "[VIRT-DISPLAY] "

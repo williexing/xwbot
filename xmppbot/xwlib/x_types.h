@@ -1,7 +1,7 @@
 #ifndef X_TYPES_H_
 #define X_TYPES_H_
 
-#include "x_config.h"
+#include <x_config.h>
 
 #include <string.h>
 #include <fcntl.h>
@@ -100,6 +100,8 @@ typedef struct iovec x_iobuf_t;
 #	define _gobee_iomsg_iovlen(x) (((_gobee_iomsg_t *)x)->msg_iovlen)
 #	define _gobee_iomsg_control(x) (((_gobee_iomsg_t *)x)->msg_control)
 #	define _gobee_iomsg_controllen(x) (((_gobee_iomsg_t *)x)->msg_controllen)
+#   define _gobee_iomsg_accrights(x) (((_gobee_iomsg_t *)x)->accrights)
+#   define _gobee_iomsg_accrightslen(x) (((_gobee_iomsg_t *)x)->accrightslen)
 typedef size_t _gobee_size_t;
 #endif
 
@@ -156,6 +158,7 @@ typedef char *KEY;
 /* entry */
 struct ht_cell
 {
+    int dirty;
   struct ht_cell *next; /* a pointer to the next element */
   KEY key; /* key    */
   VAL val; /* value  */
@@ -191,16 +194,6 @@ typedef enum
 {
   X_NONE = 0, X_CREAT, X_RDONLY, X_RDWR, X_WRONLY, X_FLAG_NUM
 } X_FLAG;
-
-/* useful macroses */
-#define BUG() do { printf("BUG()\n"); *((volatile int *)10) = 10; } while(0)
-#define BUG_ON(x)\
-  do { \
-    if (x) { \
-        printf("BUG_ON()\n"); \
-        BUG(); \
-    } \
-  } while (0)
 
 /* DEBUGGING MACROS */
 #if (defined(_DEBUG) || defined(_DEBUG_) \
@@ -264,6 +257,16 @@ typedef enum
 #       define EXIT do {} while (0)
 #endif
 
+/* useful macroses */
+#define BUG() do { TRACE("BUG()\n"); *((volatile int *)10) = 10; } while(0)
+#define BUG_ON(x)\
+  do { \
+    if (x) { \
+        TRACE("BUG_ON()\n"); \
+        BUG(); \
+    } \
+  } while (0)
+
 #if !defined(__DISABLE_MULTITHREAD__) && \
     (defined(WIN32) || defined(_WINDLL) || defined(WINDOWS))
   #define CS2CS(x) &(x)
@@ -275,7 +278,7 @@ typedef enum
   #define CS_UNLOCK(x) LeaveCriticalSection(x)
 //#elif defined(__DISABLE_MULTITHREAD__) && defined(HAVE_PTHREAD_H)
 #elif !defined(__DISABLE_MULTITHREAD__) && defined(HAVE_PTHREAD_H)
-  #define CS_DECL(x) pthread_mutex_t x;
+  #define CS_DECL(x) pthread_mutex_t x
   #define CS_INIT(x) { \
     /* printf("%d CS_INIT: %p\n",GETTID,x); */ \
     pthread_mutex_init(x,NULL); }
@@ -289,7 +292,7 @@ typedef enum
     /* printf("%d CS_LOCK: %p, %s:%d\n",GETTID,x,__FILE__,__LINE__); */ \
     pthread_mutex_lock(x); }
   #define CS_UNLOCK(x) { \
-    /* printf("%d CS_UNLOCK: %p, %s:%d\n",GETTID,x,__FILE__,__LINE__); */ \
+    /* printf("%d CS_UNLOCK: %p, %s:%d\n",GETTID,x,__FILE__,__LINE__);*/ \
     pthread_mutex_unlock(x); }
   #define CS2CS(x) &(x)
 #else /* __DISABLE_MULTITHREAD__ */
@@ -313,7 +316,11 @@ typedef enum
 #define __x_plugin_visibility /* static */
 #endif
       
-#if (defined(__GNUC__) && __GNUC__ >= 4) || defined (__clang__) || defined (__llvm__)
+#if defined(IOS)
+#       define __plugin_init
+#       define PLUGIN_INIT(x)
+  
+#elif ((defined(__GNUC__) && __GNUC__ >= 4) || defined (__clang__) || defined (__llvm__))
 typedef void (*plugin_t)(void);
 #       define __plugin_init __attribute__((constructor))
 #       define PLUGIN_INIT(x) void __plugin_init x (void)
@@ -352,6 +359,7 @@ typedef void (*plugin_t)(void);
 #       define __plugin_sect_end__ __pragma(section(".ctors$z",read,write,execute)) __declspec(allocate(".ctors$z"))
 #	endif /* _WINDLL */
 #else
+#       define __plugin_init 
 #       define PLUGIN_INIT(x)
 #endif
 

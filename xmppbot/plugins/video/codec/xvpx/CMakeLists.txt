@@ -1,17 +1,31 @@
 INCLUDE(${PROJECT_SOURCE_DIR}/INCLUDES.cmk)
 
-INCLUDE_DIRECTORIES ( ${CMAKE_CURRENT_SOURCE_DIR}/vpx/${X_ARCH}/include )
-LINK_DIRECTORIES ( ${CMAKE_CURRENT_SOURCE_DIR}/vpx/${X_ARCH}/ )
+#INCLUDE_DIRECTORIES ( ${CMAKE_CURRENT_SOURCE_DIR}/vpx/${X_ARCH}/include )
+#LINK_DIRECTORIES ( ${CMAKE_CURRENT_SOURCE_DIR}/vpx/${X_ARCH}/ )
+
+ADD_SUBDIRECTORY(vpx/3dparty/)
+INCLUDE_DIRECTORIES(${VPX_INCLUDE_DIR})
+LINK_DIRECTORIES(${VPX_LIBRARY_DIR})
 
 SET(XVPX_SRC x_vpx_plugin.c x_vpx.c x_vp8.c ${PROJECT_SOURCE_DIR}/x_dll.c)
 
 IF(ANDROID)
-INCLUDE_DIRECTORIES(/DATA/android/android-ndk-r5/sources/android/cpufeatures/)
-SET(XVPX_SRC ${XVPX_SRC} "/DATA/android/android-ndk-r5/sources/android/cpufeatures/cpu-features.c")
+INCLUDE_DIRECTORIES(${ANDROID_NDK}/sources/android/cpufeatures/)
+SET(XVPX_SRC ${XVPX_SRC} "${ANDROID_NDK}/sources/android/cpufeatures/cpu-features.c")
 ENDIF(ANDROID)
 
+
+add_library(_vp8 STATIC IMPORTED)
+set_property(TARGET _vp8 PROPERTY IMPORTED_LOCATION ${LIBRARY_OUTPUT_PATH}/lib/libvpx.a)
+#set_property(TARGET _vp8 PROPERTY IMPORTED_LOCATION ${LIBRARY_OUTPUT_PATH}/lib/libvpx.so)
+
+INCLUDE_DIRECTORIES(${LIBRARY_OUTPUT_PATH}/include)
+LINK_DIRECTORIES(${LIBRARY_OUTPUT_PATH}/lib)
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CORE_CFLAGS} -fPIC  -shared")
+
 ADD_LIBRARY ( xvpx ${XVPX_SRC} )
-TARGET_LINK_LIBRARIES( xvpx vpx xw )
+TARGET_LINK_LIBRARIES( xvpx _vp8 xw m )
 
 IF(IOS)
 ADD_LIBRARY ( xvpx_rtp_send main.c udp.c )
@@ -19,7 +33,7 @@ ELSE(IOS)
 ADD_EXECUTABLE ( xvpx_rtp_send main.c udp.c )
 ENDIF(IOS)
 
-TARGET_LINK_LIBRARIES( xvpx_rtp_send xvpx )
+TARGET_LINK_LIBRARIES( xvpx_rtp_send xvpx ${CMAKE_THREAD_LIBS_INIT} m)
 
 IF(WIN32)
 TARGET_LINK_LIBRARIES( xvpx_rtp_send ws2_32 )
@@ -28,7 +42,8 @@ TARGET_LINK_LIBRARIES( xvpx_rtp_send log m )
 TARGET_LINK_LIBRARIES( xvpx log m )
 ENDIF(WIN32)
 
-add_dependencies( xvpx_rtp_send xvpx )
+add_dependencies( xvpx_rtp_send vp8 )
+add_dependencies( xvpx vp8 )
 
 
 INCLUDE(CPack)

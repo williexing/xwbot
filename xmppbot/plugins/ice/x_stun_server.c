@@ -198,6 +198,7 @@ x_stunserver_on_local_candidate(x_object *o, const char *addr_str,
 
   /* send new gathered candidate to the otherend */
   x_object_send_down(x_object_get_parent(o), tmp, NULL);
+  _REFPUT(tmp,NULL);
 
   EXIT;
 }
@@ -390,7 +391,7 @@ x_stunserver_init(void)
   x_stunserver_class.on_assign = &x_stunserver_on_assign;
   x_stunserver_class.on_append = &x_stunserver_on_append;
   x_stunserver_class.on_child_append = &x_stunserver_on_child_append;
-  x_stunserver_class.finalize = &x_stunserver_exit;
+  x_stunserver_class.commit = &x_stunserver_exit;
   x_stunserver_class.try_writev = &x_stunserver_try_writev;
 
   TRACE("Sizeof struct x_stun_server %d bytes,"

@@ -83,7 +83,7 @@ x_class_get_ns(const char *nsname)
   int i;
   x_ns_t *_ns = NULL;
 
-  _ns = (x_ns_t *) ht_get((KEY) nsname, (struct ht_cell **) &nsmap, &i);
+  _ns = (x_ns_t *) ht_lowcase_get((KEY) nsname, (struct ht_cell **) &nsmap, &i);
 
   if (!_ns)
     {
@@ -115,7 +115,7 @@ x_obj_get_class(const char *name, const char *ns, x_obj_attr_t *attrs,
 
   namespace = x_class_get_ns(_ns);
 
-  ret = (x_objectclass *) ht_get((KEY) name, (struct ht_cell **)
+  ret = (x_objectclass *) ht_lowcase_get((KEY) name, (struct ht_cell **)
       &namespace->classmap, &i);
 
   _r = ret ? &ret->lentry : NULL;

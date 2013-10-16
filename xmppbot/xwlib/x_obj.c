@@ -36,7 +36,7 @@
 
 #undef DEBUG_PRFX
 
-#include "x_config.h"
+#include <x_config.h>
 
 #if TRACE_XOBJECT_ON
 #define DEBUG_PRFX "[xobject] "
@@ -61,24 +61,48 @@
 
 static void
 x_object_set_parent(x_object *child, x_object *parent);
+
 static x_object *
 __x_object_get_child_nolock(x_object *xparent, const x_string_t cname);
 
+static __inline__ void
+x_object_io_update(x_object *thiz, x_obj_listener_t **p,
+                   x_obj_listener_t **prev, int err);
+
+/**
+ * @brief x_object_set_write_handler
+ * @param from
+ * @param to
+ * @deprecated Use 'write_out' api...
+ */
 void
-x_object_set_write_handler(x_object *o, x_object *h)
+x_object_set_write_handler(x_object *from, x_object *to)
 {
   ENTER;
-  o->write_handler = h;
-  _REFGET(h);
+  if (from && to)
+  {
+      from->write_handler = to;
+      _REFGET(to);
+  }
   EXIT;
 }
 
+/**
+ * @brief x_object_try_write
+ * @param xobj
+ * @param buf
+ * @param len
+ * @param attrs
+ * @return
+ * @deprecated Use x_object_try_writev()
+ */
 int
 x_object_try_write(x_object *xobj, void *buf, int len, x_obj_attr_t *attrs)
 {
-  int res = 0;
+  int res = -1;
   ENTER;
-  if (xobj->objclass->try_write)
+  if (xobj->objclass
+          && xobj->objclass->try_write)
     {
       res = xobj->objclass->try_write(xobj, buf, len, attrs);
     }
@@ -86,11 +110,19 @@ x_object_try_write(x_object *xobj, void *buf, int len, x_obj_attr_t *attrs)
   return res;
 }
 
+/**
+ * @brief x_object_try_writev
+ * @param xobj
+ * @param iov
+ * @param iovcnt
+ * @param attrs
+ * @return
+ */
 int
 x_object_try_writev(x_object *xobj, const struct iovec *iov, int iovcnt,
     x_obj_attr_t *attrs)
 {
-  int res = 0;
+  int res = -1;
   ENTER;
   if (xobj->objclass->try_writev)
     {
@@ -101,7 +133,31 @@ x_object_try_writev(x_object *xobj, const struct iovec *iov, int iovcnt,
 }
 
 /**
- * initialize xobject
+ * @brief x_object_try_writev2
+ * @param xobj
+ * @param slot
+ * @param iov
+ * @param iovcnt
+ * @param attrs
+ * @return
+ */
+int
+x_object_try_writev2(x_object *xobj, int slot, const struct iovec *iov, int iovcnt,
+    x_obj_attr_t *attrs)
+{
+  int res = -1;
+  ENTER;
+  if (xobj->objclass->try_writev2)
+    {
+      res = xobj->objclass->try_writev2(xobj, slot, iov, iovcnt, attrs);
+    }
+  EXIT;
+  return res;
+}
+
+/**
+ * @brief x_object_init
+ * @param xobj
  */
 void
 x_object_init(x_object *xobj)
@@ -116,7 +172,9 @@ x_object_init(x_object *xobj)
 }
 
 /**
- * Allocate new empty xobject
+ * @brief __x_object_alloc
+ * @param extra
+ * @return
  */
 static x_object *
 __x_object_alloc(unsigned int extra)
@@ -140,6 +198,12 @@ __x_object_alloc(unsigned int extra)
   return xobj;
 }
 
+/**
+ * @brief x_object_find
+ * @param starto
+ * @param hints
+ * @return
+ */
 x_object *
 x_object_find(x_object *starto, x_obj_attr_t *hints)
 {
@@ -168,6 +232,12 @@ x_object_find(x_object *starto, x_obj_attr_t *hints)
   return o;
 }
 
+/**
+ * @brief x_object_find_child
+ * @param parent
+ * @param hints
+ * @return
+ */
 x_object *
 x_object_find_child(x_object *parent, x_obj_attr_t *hints)
 {
@@ -192,8 +262,12 @@ x_object_find_child(x_object *parent, x_obj_attr_t *hints)
 
 /**
  * Allocate new xobject
- * @param proto_on_fail indicates should object factory allocate
- * default object for unregistered class requests.
+ * @brief x_object_new_ns_match
+ * @param p_name
+ * @param ns
+ * @param hints
+ * @param proto_on_fail indicates should object factory allocate default object for unregistered class requests.
+ * @return
  */
 x_object *
 x_object_new_ns_match(const x_string_t p_name, const x_string_t ns,
@@ -253,7 +327,6 @@ x_object_new_ns_match(const x_string_t p_name, const x_string_t ns,
    x_object_get_name(xobj
    ));
    */
-
   /* callback */
   if (xobj->objclass && xobj->objclass->on_create)
     xobj->objclass->on_create(xobj);
@@ -262,6 +335,12 @@ x_object_new_ns_match(const x_string_t p_name, const x_string_t ns,
   return xobj;
 }
 
+/**
+ * @brief x_object_new_ns
+ * @param name
+ * @param ns
+ * @return
+ */
 x_object *
 x_object_new_ns(const x_string_t name, const x_string_t ns)
 {
@@ -277,6 +356,12 @@ x_object_new(const x_string_t name)
   return x_object_new_ns(name, NULL);
 }
 
+/**
+ * @brief __x_object_insert_into_tree
+ * @param parent
+ * @param xobj
+ * @return
+ */
 static int
 __x_object_insert_into_tree(x_object *parent, x_object *xobj)
 {
@@ -313,9 +398,10 @@ __x_object_insert_into_tree(x_object *parent, x_object *xobj)
 
       if (xt)
         TREE_NODE(xt)->next = TREE_NODE(xobj);
-
-      TREE_NODE(xobj)->next = NULL;
     }
+
+  TREE_NODE(xobj)->next = NULL;
+  TREE_NODE(xobj)->sibling = NULL;
 
   // update child count
   TREE_NODE(parent)->child_count++;
@@ -324,8 +410,14 @@ __x_object_insert_into_tree(x_object *parent, x_object *xobj)
   return 0;
 }
 
+/**
+ * @brief __x_object_remove_from_treenode
+ * @param parent
+ * @param xobj
+ * @return
+ */
 static int
-__x_object_remove_from_tree(x_object *parent, x_object *xobj)
+__x_object_remove_from_treenode(x_object *parent, x_object *xobj)
 {
   x_object *xt, *xp;
 
@@ -342,23 +434,23 @@ __x_object_remove_from_tree(x_object *parent, x_object *xobj)
     {
       /* update nexts */
       for (xt = NULL,
-      xp = __x_object_get_child_nolock(parent, _GETNM(xobj)); xp; xp = _NXT(xp)
+           xp = __x_object_get_child_nolock(parent, _GETNM(xobj));
+           xp && (xp != xobj); xp = _NXT(xp)
       )
         xt = xp;
 
-      if (xt)
-        TREE_NODE(xt)->next = TREE_NODE(xobj);
+      if (xt && (xp == xobj))
+        TREE_NODE(xt)->next = TREE_NODE(xobj)->next;
 
       TREE_NODE(xobj)->next = NULL;
 
       /* update siblings */
       for (xt = NULL,
-      xp = TNODE_TO_XOBJ(TREE_NODE(parent)->sons); xp && (xp != xobj); xp =
-          _SBL(xp)
-          )
+           xp = TNODE_TO_XOBJ(TREE_NODE(parent)->sons);
+           xp && (xp != xobj); xp = _SBL(xp))
         xt = xp;
 
-      if (xt)
+      if (xt && (xp == xobj))
         TREE_NODE(xt)->sibling = TREE_NODE(xobj)->sibling;
 
       TREE_NODE(xobj)->sibling = NULL;
@@ -368,6 +460,11 @@ __x_object_remove_from_tree(x_object *parent, x_object *xobj)
   // update child count
   TREE_NODE (parent)->child_count <= 0 ? TREE_NODE(parent)->child_count += 0 :
       TREE_NODE(parent)->child_count--;
+
+  /* set dirty */
+  x_object_set_cr(parent, x_object_get_cr(parent) | XOBJ_CR_DIRTY);
+  x_object_set_cr(xobj, x_object_get_cr(xobj) | XOBJ_CR_DIRTY);
+
   EXIT;
 
   return 0;
@@ -390,6 +487,11 @@ x_object_touch(x_object *xobj)
 
 /**
  * Returns object at path 'path' relative to 'ctx'
+ *
+ * @brief x_object_from_path
+ * @param ctx
+ * @param path
+ * @return
  */
 x_object *
 x_object_from_path(const x_object *ctx, const x_string_t path)
@@ -433,6 +535,13 @@ x_object_from_path(const x_object *ctx, const x_string_t path)
   return (_obj ? _obj : (x_object *) ctx);
 }
 
+/**
+ * @brief x_object_add_path
+ * @param ctx
+ * @param path
+ * @param obj
+ * @return
+ */
 x_object *
 x_object_add_path(x_object *ctx, const x_string_t path, x_object *obj)
 {
@@ -444,6 +553,12 @@ x_object_add_path(x_object *ctx, const x_string_t path, x_object *obj)
   return parent;
 }
 
+/**
+ * @brief x_object_mkpath
+ * @param ctx
+ * @param path
+ * @return
+ */
 x_object *
 x_object_mkpath(const x_object *ctx, const x_string_t path)
 {
@@ -477,7 +592,7 @@ x_object_mkpath(const x_object *ctx, const x_string_t path)
       _obj = _CHLD(obj, p1);
       if (!_obj)
         {
-          _obj = _NEW(p1,NULL);
+          _obj = _GNEW(p1,NULL);
           /*          TRACE("Adding '%s' to '%s'\n",x_object_get_name(_obj),x_object_get_name(obj));*/
           _INS(obj, _obj);
         }
@@ -494,13 +609,21 @@ x_object_mkpath(const x_object *ctx, const x_string_t path)
   return obj;
 }
 
+/**
+ * @brief x_object_print_path
+ * @param obj
+ * @param depth
+ */
 void
 x_object_print_path(x_object *obj, int depth)
 {
   struct ht_cell *cell;
   int i = depth;
   x_object *tmp;
-  char buf[64], *p = buf;
+  char buf[1024], *p = buf;
+
+  i = i<sizeof(buf)-1 ? i:sizeof(buf)-1;
+
   while (--i >= 0)
     *p++ = '\t';
   *p = 0;
@@ -512,7 +635,16 @@ x_object_print_path(x_object *obj, int depth)
 
   for (tmp = _CHLD(obj, NULL); tmp; tmp = _SBL(tmp)
   )
+  {
+#ifdef DEBUG
+      if (tmp < (x_object*)0x100)
+      {
+          TRACE("%p\n",tmp);
+          BUG();
+      }
+#endif
     x_object_print_path(tmp, depth + 1);
+  }
 }
 
 /**
@@ -540,7 +672,13 @@ x_object_to_path(x_object *obj, x_string_t pathbuf, unsigned int bufsiz)
 }
 
 /**
- * Make alias for @xobj in the @parent sub-tree
+ * Make alias for xobj in the parent sub-tree
+ *
+ * @brief x_object_make_alias
+ * @param xobj
+ * @param parent
+ * @param alias_name
+ * @return
  */
 x_alias *
 x_object_make_alias(x_object *xobj, x_object *parent,
@@ -576,6 +714,10 @@ x_object_make_alias(x_object *xobj, x_object *parent,
   return xalias;
 }
 
+/**
+ * @brief x_object_remove_from_parent
+ * @param xobj
+ */
 void
 x_object_remove_from_parent(x_object *xobj)
 {
@@ -600,13 +742,13 @@ x_object_remove_from_parent(x_object *xobj)
       XOBJ_CS_LOCK(parent);
       XOBJ_CS_LOCK(xobj);
 
-      __x_object_remove_from_tree(parent, xobj);
+      __x_object_remove_from_treenode(parent, xobj);
 
       XOBJ_CS_UNLOCK(xobj);
       XOBJ_CS_UNLOCK(parent);
 
       /* notify parent listeners */
-      msg = _NEW("__message","gobee");
+      msg = _GNEW("$message",NULL);
       _ASET(msg, "subject", "child-remove");
       _ASET(msg, "child-name", _GETNM(xobj));
 
@@ -629,6 +771,11 @@ x_object_remove_from_parent(x_object *xobj)
 
 /**
  * Append child but don't fire any events
+ *
+ * @brief x_object_append_child_no_cb
+ * @param parent
+ * @param child
+ * @return
  */
 int
 x_object_append_child_no_cb(x_object *parent, x_object *child)
@@ -656,6 +803,9 @@ x_object_append_child_no_cb(x_object *parent, x_object *child)
   /* set bus */
   child->bus = parent->bus;
 
+  /* set dirty */
+  x_object_set_cr(parent, x_object_get_cr(parent) | XOBJ_CR_DIRTY);
+
   XOBJ_CS_UNLOCK(child);
   XOBJ_CS_UNLOCK(parent);
 
@@ -663,9 +813,13 @@ x_object_append_child_no_cb(x_object *parent, x_object *child)
   return 0;
 }
 
-
 /**
  * Appends child object
+ *
+ * @brief x_object_append_child
+ * @param parent
+ * @param child
+ * @return
  */
 int
 x_object_append_child(x_object *parent, x_object *child)
@@ -684,7 +838,7 @@ x_object_append_child(x_object *parent, x_object *child)
   if (parent->objclass && parent->objclass->on_child_append)
     parent->objclass->on_child_append(parent, child);
 
-  /* emit append signals */
+  /* emit 'append' signals */
   if (child->objclass && child->objclass->on_append)
     child->objclass->on_append(child, parent);
 
@@ -693,7 +847,7 @@ x_object_append_child(x_object *parent, x_object *child)
   x_path_listeners_notify(_GETNM(child), child);
 
   /* notify parent listeners */
-  msg = _NEW("__message","gobee");
+  msg = _GNEW("$message",NULL);
   _ASET(msg, "subject", "child-append");
   _ASET(msg, _XS("child-name"), _GETNM(child));
 
@@ -709,16 +863,26 @@ x_object_append_child(x_object *parent, x_object *child)
   return 0;
 }
 
+/**
+ * @brief x_object_get_name
+ * @param xobj
+ * @return
+ */
 const x_string_t
 x_object_get_name(const x_object *xobj)
 {
   TRACE("xobj(%p)\n", xobj);
 
-  BUG_ON((TREE_NODE(xobj)->name == 0x0));
+//  BUG_ON((TREE_NODE(xobj)->name == 0x0));
 
   return TREE_NODE(xobj)->name;
 }
 
+/**
+ * @brief x_object_set_name
+ * @param xobj
+ * @param name
+ */
 void
 x_object_set_name(x_object *xobj, const x_string_t name)
 {
@@ -753,12 +917,13 @@ x_object_copy(x_object *o)
   x_object *msg;
   ENTER;
 
-  msg = _NEW("$message",NULL);
+  msg = _GNEW("$message",NULL);
   BUG_ON(!msg);
 
   XOBJ_CS_LOCK(o);
   _SETNM(msg, _GETNM(o));
   x_object_default_assign_cb(msg, &o->attrs);
+  x_string_write(&msg->content, o->content.cbuf, o->content.pos);
   XOBJ_CS_UNLOCK(o);
 
   EXIT;
@@ -786,16 +951,33 @@ x_object_full_copy(x_object *o)
   return msg;
 }
 
-/**
- * get Child
+/*
+ * Get Child object
+ * @brief __x_object_get_child
+ * @param xparent
+ * @param cname
+ * @param lock
+ * @return
  */
 static x_object *
 __x_object_get_child(x_object *xparent, const x_string_t cname, int lock)
 {
-  x_object *_xobj = NULL, *xobj;
+    tree_node_t *tn = NULL;
+  x_object *_xobj = NULL, *xobj = NULL;
   const char *_name;
 
-  xobj = TNODE_TO_XOBJ(TREE_NODE(xparent)->sons);
+  if(!xparent)
+  {
+      TRACE("Invalid param: xparent==NULL \n");
+      return NULL;
+  }
+
+  tn = TREE_NODE(xparent);
+  if (!tn)
+  {
+    return NULL;
+  }
+  xobj = TNODE_TO_XOBJ(tn->sons);
 
   /*  ENTER;*/
   if (!cname)
@@ -811,12 +993,13 @@ __x_object_get_child(x_object *xparent, const x_string_t cname, int lock)
   while (xobj != NULL && NEQ(x_object_get_name(xobj), cname))
   xobj = x_object_get_sibling(xobj);
 #else
-  for (; xobj != NULL; xobj = _SBL(xobj))
+  for(; xobj != NULL; xobj = _SBL(xobj))
     {
       TRACE("xobj = %p\n", xobj);
       _name = _GETNM(xobj);
       TRACE("_name = %s, cname = %s\n", _name, cname);
-      if (EQN(_name, cname))
+
+      if(EQN(_name, cname))
         {
           TRACE("EQUAL!!!!!!\n");
           _xobj = xobj;
@@ -836,6 +1019,12 @@ __x_object_get_child(x_object *xparent, const x_string_t cname, int lock)
   return _xobj;
 }
 
+/**
+ * @brief x_object_get_child
+ * @param xparent
+ * @param cname
+ * @return
+ */
 x_object *
 x_object_get_child(x_object *xparent, const x_string_t cname)
 {
@@ -849,7 +1038,12 @@ __x_object_get_child_nolock(x_object *xparent, const x_string_t cname)
 }
 
 /**
- * get Child from index
+ * Get Child from index
+ *
+ * @brief x_object_get_child_from_index
+ * @param xparent
+ * @param ind
+ * @return
  */
 x_object *
 x_object_get_child_from_index(x_object *xparent, int ind)
@@ -868,9 +1062,12 @@ x_object_get_child_from_index(x_object *xparent, int ind)
 }
 
 /**
- * get object's index in parent
+ * Get object's index in a parent
+ * @brief x_object_get_index
+ * @param xobj
+ * @return
  */
-EXPORT_SYMBOL int
+int
 x_object_get_index(x_object *xobj)
 {
   int i = 0;
@@ -903,6 +1100,11 @@ x_object_get_index(x_object *xobj)
 
 /**
  * Get element by tag name
+ *
+ * @brief x_object_get_element_by_tag_name
+ * @param parent
+ * @param name
+ * @return
  */
 x_object *
 x_object_get_element_by_tag_name(const x_object *parent, const x_string_t name)
@@ -912,6 +1114,11 @@ x_object_get_element_by_tag_name(const x_object *parent, const x_string_t name)
   return _CHLD(parent, name);
 }
 
+/**
+ * @brief x_object_get_next
+ * @param xobj
+ * @return
+ */
 x_object *
 x_object_get_next(const x_object *xobj)
 {
@@ -920,6 +1127,11 @@ x_object_get_next(const x_object *xobj)
   return TNODE_TO_XOBJ(tnode);
 }
 
+/**
+ * @brief x_object_get_sibling
+ * @param xobj
+ * @return
+ */
 x_object *
 x_object_get_sibling(const x_object *xobj)
 {
@@ -933,6 +1145,11 @@ x_object_get_sibling(const x_object *xobj)
 
 /**
  * Set xobject attribute
+ *
+ * @brief x_object_setattr
+ * @param xobj
+ * @param k
+ * @param v
  */
 void
 x_object_setattr(x_object *xobj, const x_string_t k, const x_string_t v)
@@ -941,6 +1158,12 @@ x_object_setattr(x_object *xobj, const x_string_t k, const x_string_t v)
   setattr((KEY) k, (VAL) v, &xobj->attrs);
 }
 
+/**
+ * @brief x_object_getattr
+ * @param xobj
+ * @param k
+ * @return
+ */
 x_string_t
 x_object_getattr(x_object *xobj, const x_string_t k)
 {
@@ -950,6 +1173,13 @@ x_object_getattr(x_object *xobj, const x_string_t k)
   return res;
 }
 
+/**
+ * @brief x_object_set_content
+ * @param xobj
+ * @param buf
+ * @param len
+ * @return
+ */
 int
 x_object_set_content(x_object *xobj, const char *buf, u_int32_t len)
 {
@@ -962,27 +1192,20 @@ static int
 __x_object_destroy(x_object *xobj)
 {
   const char *_name = NULL;
-  x_object *son = TNODE_TO_XOBJ(TREE_NODE(xobj)->sons), *xt;
   ENTER;
 
   XOBJ_CS_LOCK(xobj);
 
-  while (son)
-    {
-      xt = _SBL(son);
-      __x_object_destroy(son);
-      son = xt;
-    }
-
   attr_list_clear(&xobj->attrs);
   _name = _GETNM(xobj);
-  x_free((void *) _name);
+  if (_name) x_free((void *) _name);
 #pragma message ("what else to free here ?")
 
   XOBJ_CS_UNLOCK(xobj);
   XOBJ_CS_RELEASE(xobj);
 
-  /* TODO: free all the rest here */x_free(xobj);
+  /* TODO: free all the rest here */
+  x_free(xobj);
 
   EXIT;
   return 0;
@@ -990,6 +1213,10 @@ __x_object_destroy(x_object *xobj)
 
 /**
  * Frees xml device
+ *
+ * @brief x_object_destroy_no_cb
+ * @param xobj
+ * @return
  */
 int
 x_object_destroy_no_cb(x_object *xobj)
@@ -1044,14 +1271,15 @@ x_object_destroy_no_cb(x_object *xobj)
 
       TREE_NODE(xobj)->next = NULL;
 
-      /* unlink from parent */TREE_NODE(xobj)->parent = NULL;
+      /* unlink from parent */
+      TREE_NODE(xobj)->parent = NULL;
 
-      /* decrement child count */TREE_NODE(parent)->child_count--;
+      /* decrement child count */
+      TREE_NODE(parent)->child_count--;
 
       XOBJ_CS_UNLOCK(parent);
     }
 
-  /* destroy unlinked object and its subtree */
   __x_object_destroy(xobj);
 
   EXIT;
@@ -1059,6 +1287,10 @@ x_object_destroy_no_cb(x_object *xobj)
   return 0;
 }
 
+/**
+ * @brief x_object_destroy
+ * @param xobj
+ */
 void
 x_object_destroy(x_object *xobj)
 {
@@ -1077,6 +1309,11 @@ x_object_destroy(x_object *xobj)
   return;
 }
 
+/**
+ * @brief x_object_get_parent
+ * @param xobj
+ * @return
+ */
 x_object *
 x_object_get_parent(const x_object *xobj)
 {
@@ -1092,7 +1329,11 @@ x_object_set_parent(x_object *child, x_object *parent)
 }
 
 /**
- * TODO Make default assignment callback's symbol public
+ * @todo Make default assignment callback's symbol public
+ * @brief x_object_default_match_cb
+ * @param o
+ * @param attrs
+ * @return
  */
 int
 x_object_default_match_cb(x_object *o, x_obj_attr_t *attrs)
@@ -1104,7 +1345,9 @@ x_object_default_match_cb(x_object *o, x_obj_attr_t *attrs)
 
 /**
  * API Matching function
- *
+ * @brief x_object_match
+ * @param o
+ * @param attrs
  * @return int TRUE if object matches pattern, FALSE otherwise
  */
 int
@@ -1124,7 +1367,11 @@ x_object_match(x_object *o, x_obj_attr_t *attrs)
 }
 
 /**
- * TODO Make default assignment callback's symbol public
+ * @todo Make default assignment callback's symbol public
+ * @brief x_object_default_assign_cb
+ * @param o
+ * @param attrs
+ * @return
  */
 x_object *
 x_object_default_assign_cb(x_object *o, x_obj_attr_t *attrs)
@@ -1140,7 +1387,12 @@ x_object_default_assign_cb(x_object *o, x_obj_attr_t *attrs)
 }
 
 /**
- * this assigns given attribute list to xobject.
+ * assigns given attributes list to xobject.
+ *
+ * @brief x_object_assign
+ * @param o
+ * @param attrs
+ * @return
  */
 x_object *
 x_object_assign(x_object *o, x_obj_attr_t *attrs)
@@ -1175,11 +1427,56 @@ x_object_assign(x_object *o, x_obj_attr_t *attrs)
   return o;
 }
 
+/**
+ * @brief x_object_vassign
+ * @param o
+ * @return
+ */
+#include <stdarg.h>
+x_object *
+x_object_vassign(x_object *o, ...)
+{
+    int typ;
+    x_string_t key;
+    x_string_t val;
+    x_obj_attr_t attrs = {0,0,0};
+    va_list al;
+    ENTER;
+
+    va_start(al,o);
+    do
+    {
+        typ = va_arg(al,int);
+        key = va_arg(al,x_string_t);
+        val = va_arg(al,x_string_t);
+
+        /* @todo Don't ignore type */
+        if(typ && key)
+        {
+            setattr(key,val,&attrs);
+        }
+    }
+    while(typ != 0 && key != NULL);
+
+    va_end(al);
+
+    _ASGN(o,&attrs);
+
+    attr_list_clear(&attrs);
+
+    EXIT;
+    return o;
+}
+
+/**
+ * @brief x_object_lost_focus
+ * @param o
+ */
 void
 x_object_lost_focus(x_object *o)
 {
-  if (o->objclass && o->objclass->finalize)
-    o->objclass->finalize(o);
+  if (o->objclass && o->objclass->commit)
+    o->objclass->commit(o);
 }
 
 /**
@@ -1215,7 +1512,10 @@ x_object_send_down(x_object *xobj, x_object *o, x_obj_attr_t *ctx)
 }
 
 /**
- *
+ * @brief x_object_getenv
+ * @param x
+ * @param anam
+ * @return
  */
 const x_string_t
 x_object_getenv(x_object *x, const x_string_t anam)
@@ -1228,6 +1528,10 @@ x_object_getenv(x_object *x, const x_string_t anam)
   return ret;
 }
 
+/**
+ * @brief x_object_ref_put
+ * @param o
+ */
 void
 x_object_ref_put(x_object *o, void
 (*unref_cb)(x_object *))
@@ -1240,6 +1544,11 @@ x_object_ref_put(x_object *o, void
     }
 }
 
+/**
+ * @brief x_object_ref_get
+ * @param o
+ * @return
+ */
 x_object *
 x_object_ref_get(x_object *o)
 {
@@ -1247,6 +1556,11 @@ x_object_ref_get(x_object *o)
   return o;
 }
 
+/**
+ * @brief x_object_get_child_count
+ * @param o
+ * @return
+ */
 int
 x_object_get_child_count(x_object *o)
 {
@@ -1311,13 +1625,22 @@ x_object_listeners_exists(x_object *xobj, x_object *listener)
   return 0;
 }
 
+/**
+ * @brief x_object_subscribe
+ * @param xobj
+ * @param listener
+ * @return
+ */
 int
 x_object_subscribe(x_object *xobj, x_object *listener)
 {
   x_obj_listener_t *head = &xobj->listeners;
   x_obj_listener_t *p;
 
-  TRACE("%p,%p,%p\n", head, head->next, listener);
+  _REFGET(xobj);
+  _REFGET(listener);
+
+//  TRACE("%p,%p,%p\n", head, head->next, listener);
 
   if (!x_object_listeners_exists(xobj, listener))
     {
@@ -1327,39 +1650,81 @@ x_object_subscribe(x_object *xobj, x_object *listener)
       p->next = head->next;
       head->next = p;
     }
+  else
+    {
+      _REFPUT(listener,NULL);
+    }
+
+  _REFPUT(xobj,NULL);
+
   return 0;
 }
 
+/**
+ * @brief x_object_unsubscribe
+ * @param xobj
+ * @param listener
+ * @return
+ */
 int
 x_object_unsubscribe(x_object *xobj, x_object *listener)
 {
+    int err = -1;
   x_obj_listener_t *head = &xobj->listeners;
   x_obj_attr_t *p, *prev = NULL;
 
-  for (p = head->next; p; prev = p, p = p->next)
+  _REFGET(xobj);
+
+  for (p = head->next, prev = head; p; prev = p, p = p->next)
     if ((uint64_t) (void *) p->key == (uint64_t) (void *) listener)
       {
         prev->next = p->next;
+        p->key = (KEY)0;
+        p->val = (VAL)0;
+        _REFPUT(listener,NULL);
         x_free(p);
-        return 0;
+        err = 0;
+        break;
       }
-  return -1;
+
+_clean_n_exit:
+  _REFPUT(xobj,NULL);
+
+  return err;
 }
 
+/**
+ * @brief x_object_reset_subscription
+ * @param xobj
+ */
 void
 x_object_reset_subscription(x_object *xobj)
 {
   x_obj_listener_t *head = &xobj->listeners;
   x_obj_attr_t *p, *_p;
+
+  _REFGET(xobj);
+
   for (p = head->next; p;)
     {
       _p = p->next;
+      if(p->key)
+      {
+          _REFPUT((x_object *)(void *)p->key,NULL);
+      }
       x_free(p);
       p = _p;
     }
+
+  _REFPUT(xobj,NULL);
+
   head->next = NULL;
 }
 
+/**
+ * @brief x_object_listeners_init
+ * @param xobj
+ */
 void
 x_object_listeners_init(x_object *xobj)
 {
@@ -1369,6 +1734,12 @@ x_object_listeners_init(x_object *xobj)
   head->val = NULL;
 }
 
+/**
+ * @brief x_object_sendmsg
+ * @param to
+ * @param from
+ * @param msg
+ */
 void
 x_object_sendmsg(x_object *to, const x_object *from, const x_object *msg)
 {
@@ -1378,6 +1749,11 @@ x_object_sendmsg(x_object *to, const x_object *from, const x_object *msg)
     }
 }
 
+/**
+ * @brief x_object_sendmsg_multicast
+ * @param from
+ * @param msg
+ */
 void
 x_object_sendmsg_multicast(x_object *from, const x_object *msg)
 {
@@ -1392,6 +1768,13 @@ x_object_sendmsg_multicast(x_object *from, const x_object *msg)
     }
 }
 
+/**
+ * @brief x_object_open
+ * @param ctx
+ * @param name
+ * @param hints
+ * @return
+ */
 x_object *
 x_object_open(x_object *ctx, const x_string_t name, x_obj_attr_t *hints)
 {
@@ -1407,7 +1790,7 @@ x_object_open(x_object *ctx, const x_string_t name, x_obj_attr_t *hints)
 
   if (!ret)
     {
-      ret = _NEW(name,NULL);
+      ret = _GNEW(name,NULL);
       _INS(ctx, ret);
       _ASGN(ret, hints);
     }
@@ -1424,7 +1807,7 @@ x_object_clone(x_object * pattern)
 {
   x_object *ret;
   x_object *ctx;
-  ret = _NEW(_GETNM(pattern),NULL);
+  ret = _GNEW(_GETNM(pattern),NULL);
   ctx = _PARNT(pattern);
   if (ctx)
     _INS(ctx, ret);
@@ -1432,27 +1815,175 @@ x_object_clone(x_object * pattern)
   return ret;
 }
 
-#ifdef XOBJECT_EVENTS
 /**
- * @todo This should be replaced with event domains
- * subsystem.
+ * @brief x_object_get_cr
+ * @param xobj
+ * @return
+ */
+uint32_t
+x_object_get_cr(x_object *xobj)
+{
+  return xobj->cr;
+}
+
+/**
+ * @brief x_object_set_cr
+ * @param xobj
+ * @param _cr
+ * @return
+ */
+uint32_t
+x_object_set_cr(x_object *xobj, uint32_t _cr)
+{
+  xobj->cr = _cr;
+  return xobj->cr;
+}
+
+/**
+ * @brief x_object_destroy_tree
+ * @param thiz
  */
 void
-x_object_add_watcher(x_object *obj, void *watcher, int wtype)
+x_object_destroy_tree(x_object *thiz)
 {
-  x_object *bus = obj->bus;
+    x_object *chld;
+    x_object *_chld;
+
+    printf("%s():%d: Destroy tree of '%s' refs(%d)\n",
+           __FUNCTION__,__LINE__,_GETNM(thiz), thiz->refcount.counter);
+
+    if (thiz->objclass && thiz->objclass->on_tree_destroy)
+        thiz->objclass->on_tree_destroy(thiz);
+
+    for (chld = _CHLD(thiz,NULL);chld;)
+    {
+      printf(">> Destroying '%s' refs(%d)\n",_GETNM(chld),chld->refcount.counter);
+
+      x_object_destroy_tree(chld);
+
+      _chld = chld;
+      /* save next */
+      chld = _SBL(chld);
+
+      /* drop child */
+      _RMOV(_chld);
+
+      printf("<< Destroying '%s' refs(%d)\n",_GETNM(_chld),_chld->refcount.counter);
+
+      /* schedule for deletion */
+      _REFPUT(_chld,NULL);
+    }
+
+    printf("%s():%d: Destroy tree complete '%s' refs(%d)\n",
+           __FUNCTION__,__LINE__,_GETNM(thiz), thiz->refcount.counter);
+}
+
+#ifdef XOBJECT_EVENTS
+/**
+ * Get event domain controller
+ * @brief x_object_get_nearest_evdomain
+ * @param xobj
+ * @return xevent_dom_t pointer
+ */
+x_object *
+x_object_get_nearest_evdomain(x_object *xobj, x_obj_attr_t *hints)
+{
+    x_object *ret = NULL;
+    for (; xobj; xobj = _PARNT(xobj)
+         )
+        if (xobj->loop != NULL)
+        {
+            ret = xobj;
+            break;
+        }
+    return ret;
+}
+
+/**
+ * @todo This should be replaced with event domains subsystem.
+ * @brief x_object_add_watcher
+ * @param xobj
+ * @param watcher
+ * @param wtype
+ * @return
+ */
+int
+x_object_add_watcher(x_object *xobj, void *watcher, int wtype)
+{
+    x_object *evdom = NULL;
+//    x_object *bus = obj->bus;
+    ENTER;
+
+    TRACE("Priority = %d\n", ev_priority(watcher));
+
+    evdom = x_object_get_nearest_evdomain(xobj,NULL);
+    if (!evdom)
+    {
+        BUG();
+        return -1;
+    }
+
+    switch (wtype)
+    {
+    case EVT_IO:
+        _REFGET(evdom);
+        ev_io_start(evdom->loop, (ev_io *) watcher);
+        xobj->event_domain = evdom;
+        break;
+
+    case EVT_PERIODIC:
+        _REFGET(evdom);
+        ev_periodic_start(evdom->loop, (ev_periodic *) watcher);
+        xobj->event_domain = evdom;
+        break;
+
+    case EVT_TIMER:
+        BUG();
+        break;
+
+    default:
+        BUG();
+        break;
+    };
+
+    EXIT;
+}
+
+/**
+ * @brief x_object_remove_watcher
+ * @param obj
+ * @param watcher
+ * @param wtype
+ */
+void
+x_object_remove_watcher(x_object *obj, void *watcher, int wtype)
+{
+  x_object *evdom = obj->event_domain;
   ENTER;
 
   TRACE("Priority = %d\n", ev_priority(watcher));
+  if (!evdom)
+  {
+      EXIT;
+      return;
+  }
+
+  if (!evdom->loop)
+  {
+      EXIT;
+      return;
+  }
 
   switch (wtype)
     {
   case EVT_IO:
-    ev_io_start(bus->loop, (ev_io *) watcher);
+    ev_io_stop(evdom->loop, (ev_io *) watcher);
+    _REFPUT(evdom,NULL);
     break;
 
   case EVT_PERIODIC:
-    ev_periodic_start(bus->loop, (ev_periodic *) watcher);
+    ev_periodic_stop(evdom->loop, (ev_periodic *) watcher);
+    _REFPUT(evdom,NULL);
     break;
 
   case EVT_TIMER:
@@ -1466,5 +1997,188 @@ x_object_add_watcher(x_object *obj, void *watcher, int wtype)
 
   EXIT;
 }
-
 #endif
+
+
+/**
+ * @brief x_object_add_follower Add follower to an object
+ * @param thiz
+ * @param follower
+ * @param slot Numeric ID used by follower to demultiplex writes
+ * @return
+ */
+int
+x_object_add_follower(x_object *thiz, x_object *follower, int slot)
+{
+  x_obj_listener_t *head = &thiz->writeout_vector;
+  x_obj_listener_t *p;
+
+  /* @todo Reference counter of this should not be incremented? */
+  _REFGET(thiz);
+  _REFGET(follower);
+
+  if (!x_object_listeners_exists(thiz, follower))
+    {
+      p = x_malloc(sizeof(x_obj_listener_t));
+      p->key = (char *) (void *) follower;
+      p->val = (char *) (void *) follower;
+      p->next = head->next;
+      head->next = p;
+    }
+  else
+    {
+      _REFPUT(follower,NULL);
+    }
+
+  _REFPUT(thiz,NULL);
+
+  return 0;
+}
+
+int
+x_object_del_follower(x_object *thiz, x_object *follower)
+{
+    int err = -1;
+  x_obj_listener_t *head = &thiz->writeout_vector;
+  x_obj_attr_t *p, *prev = NULL;
+
+  _REFGET(thiz);
+
+  for (p = head->next, prev = head; p; prev = p, p = p->next)
+    if ((uint64_t) (void *) p->key == (uint64_t) (void *) follower)
+      {
+        prev->next = p->next;
+        p->key = (KEY)0;
+        p->val = (VAL)0;
+        _REFPUT(follower,NULL);
+        x_free(p);
+        err = 0;
+        break;
+      }
+
+_clean_n_exit:
+  _REFPUT(thiz,NULL);
+
+  return err;
+}
+
+/**
+ * @brief x_object_write_out
+ * @param from
+ * @param buf
+ * @param len
+ * @param attr
+ * @return
+ * @deprecated
+ */
+int
+x_object_write_out(const x_object *thiz, const void *buf, int len, x_obj_attr_t *hints)
+{
+    int err = -1;
+    x_obj_listener_t *p, *prev = NULL;
+    x_obj_listener_t *head = &thiz->writeout_vector;
+
+    /*
+     * first write to write_handler (for compitability)
+     */
+    if (thiz->write_handler)
+    {
+        err = _WRITE(thiz->write_handler,buf,len,hints);
+    }
+
+    for (p = head->next, prev = head; p; prev = p, p = p->next)
+    {
+        /* XOBJ_CS_LOCK(X_OBJECT(p->key)); */
+        if(p->key
+                && ((unsigned long)p->key
+                    != (unsigned long)thiz->write_handler))
+        {
+            err = _WRITE(X_OBJECT(p->key),(void *)buf, len, hints);
+            x_object_io_update(thiz,&p,&prev,(err<0));
+        }
+        /* XOBJ_CS_UNLOCK(X_OBJECT(p->key)); */
+    }
+
+    return err;
+}
+
+/**
+ * @brief x_object_writev_out
+ * @param from
+ * @param iov
+ * @param iovcnt
+ * @param attr
+ * @return
+ */
+int
+x_object_writev_out(const x_object *thiz, const struct iovec *iov, int iovcnt,
+                                      x_obj_attr_t *hints)
+{
+    int err = -1;
+
+    x_obj_listener_t *p, *prev = NULL;
+    x_obj_listener_t *head = &thiz->writeout_vector;
+
+    /*
+     * first write to write_handler (for compitability)
+     */
+    if (thiz->write_handler)
+    {
+        err = _WRITEV(thiz->write_handler,iov,iovcnt,hints);
+    }
+
+    for (p = head->next, prev = head; p; prev = p, p = p->next)
+    {
+        /* XOBJ_CS_LOCK(X_OBJECT(p->key)); */
+        if(p->key
+                && ((unsigned long)p->key
+                    != (unsigned long)thiz->write_handler))
+        {
+            err = _WRITEV(X_OBJECT(p->key),iov, iovcnt, hints);
+            x_object_io_update(thiz,&p,&prev,err);
+        }
+        /* XOBJ_CS_UNLOCK(X_OBJECT(p->key)); */
+    }
+
+    return err;
+}
+
+/**
+ * @brief x_object_io_update
+ * @param thiz
+ * @param p
+ * @param prev
+ * @param err
+ */
+static __inline__ void
+x_object_io_update(x_object *thiz, x_obj_listener_t **p,
+                   x_obj_listener_t **prev, int err)
+{
+    x_object *xobj = X_OBJECT((*p)->key);
+
+    if (!xobj)
+    {
+        /* remove */
+    }
+    else if (err < 0)
+    {
+        fprintf(stderr,"Deleting faulty follower (%d)\n",xobj->io_life_count);
+        xobj->io_life_count -= 10;
+        if (xobj->io_life_count < -DEFAULT_IOLIFECOUNT)
+        {
+            (*prev)->next = (*p)->next;
+            (*p)->key = (KEY)0;
+            (*p)->val = (VAL)0;
+            _REFPUT(xobj,NULL);
+            _REFPUT(thiz,NULL);
+            x_free((*p));
+            *p = *prev;
+        }
+    }
+    else
+    {
+        ++xobj->io_life_count;
+    }
+}
+
+

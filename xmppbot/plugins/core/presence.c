@@ -5,7 +5,12 @@
  *      Author: artemka
  */
 #undef DEBUG_PRFX
+
+#include <x_config.h>
+#if TRACE_PRESENCE_ON
 #define DEBUG_PRFX "[presence] "
+#endif
+
 #include <xwlib/x_types.h>
 #include <xwlib/x_utils.h>
 #include <xwlib/x_obj.h>
@@ -27,7 +32,7 @@ typedef struct xpresence
 static x_object *proc_presence_entry = NULL;
 
 static void
-__keepalive_cb(struct ev_loop *loop, struct ev_timer *w, int revents)
+__keepalive_cb(xevent_dom_t *loop, struct ev_timer *w, int revents)
 {
   x_object *pres = X_OBJECT(w->data);
   struct x_bus *bus = (struct x_bus *) pres->bus;
@@ -62,25 +67,32 @@ presence_on_append(x_object *so, x_object *parent)
   ev_timer_init(&pres->mytimer, __keepalive_cb, 0., 5.);
   ev_timer_start(bus->obj.loop, &pres->mytimer);
 
-  msg = _NEW("presence","gobee");
+  msg = _GNEW("$message",NULL);
+  _SETNM(msg, "presence");
 
   /* @todo use presence status from __proc/presence
    * created by ___presence_on_x_path_event()
    */
-  tmp = _NEW("priority","gobee");
-  x_object_set_content(tmp, "50", 2);
-  _INS(msg, tmp);
+  tmp = _GNEW("$message",NULL);
+  _SETNM(tmp, "priority");
 
-  tmp = _NEW("c","gobee");
+  x_object_set_content(tmp, "50", 2);
+  x_object_append_child_no_cb(msg, tmp);
+
+  tmp = _GNEW("$message",NULL);
+  _SETNM(tmp, "c");
+
   _ASET(tmp, "xmlns", "http://jabber.org/protocol/caps");
   _ASET(tmp, "node", "http://xmppbot.gobee.org/caps");
   _ASET(tmp, "ver", "0.0001");
   _ASET(tmp, "ext",
-      "ca cs cv e-time ep-notify-2 html last-act mr sxe whiteboard camera-v1 video-v1 voice-v1");
-  _INS(msg, tmp);
+      "ca cs cv e-time ep-notify-2 html last-act"
+        "mr sxe whiteboard camera-v1 video-v1 voice-v1");
+  x_object_append_child_no_cb(msg, tmp);
 
   x_object_send_down(parent, msg, NULL);
-
+  _REFPUT(msg, NULL);
+  
   EXIT;
   return 0;
 }
@@ -94,22 +106,40 @@ presence_on_assign(x_object *this__, x_obj_attr_t *attrs)
   return this__;
 }
 
+void
+presence_on_child_append(x_object *this__, x_object *child)
+{
+    ENTER;
+    EXIT;
+}
+
+void
+presence_on_child_remove(x_object *this__, x_object *child)
+{
+  ENTER;
+  EXIT;
+}
+
 static void
 presence_exit(x_object *this__)
 {
+  x_object *msg;
   const char *from;
   ENTER;
 
-  printf("%s:%s():%d\n",__FILE__,__FUNCTION__,__LINE__);
-
   from = x_object_getattr(this__, "from");
+
   if (from)
     {
-      TRACE("Presence from '%s'\n",from);
-
-      if (!x_object_get_child(proc_presence_entry, from))
+//      TRACE("Presence from '%s'\n",from);
+      if (proc_presence_entry == x_object_from_path(proc_presence_entry, from))
         {
           x_object_add_path(proc_presence_entry, from, NULL);
+          msg = _GNEW("$message",NULL);
+          _ASET(msg, "subject", "presence-update");
+          _ASET(msg, "jid", from);
+          _MCAST(this__, msg);
+          _REFPUT(msg, NULL);
         }
       else
         {
@@ -156,7 +186,9 @@ presence_init(void)
   presence_class.match = &presence_match;
   presence_class.on_assign = &presence_on_assign;
   presence_class.on_append = &presence_on_append;
-  presence_class.finalize = &presence_exit;
+  presence_class.on_child_append = &presence_on_child_append;
+  presence_class.on_child_remove = &presence_on_child_remove;
+  presence_class.commit = &presence_exit;
 
   x_class_register(presence_class.cname, &presence_class);
 

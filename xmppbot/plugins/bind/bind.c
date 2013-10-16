@@ -65,16 +65,16 @@ bind_on_assign(x_object *this__, x_obj_attr_t *attrs)
     }
   else
     {
-      msg = _NEW("bind",NULL);
+      msg = _GNEW("bind",NULL);
       _ASET(msg, "xmlns", "urn:ietf:params:xml:ns:xmpp-bind");
 
-      tmp = _NEW("resource",NULL);
+      tmp = _GNEW("resource",NULL);
       x_string_write(&tmp->content, _ENV(this__,"resource"),
           x_strlen(_ENV(this__,"resource")));
 
       _INS(msg, tmp);
 
-      tmp = _NEW("iq",NULL);
+      tmp = _GNEW("iq",NULL);
       _ASET(tmp, "type", "set");
       _ASET(tmp, "id", "bind_1");
       _INS(tmp, msg);
@@ -82,6 +82,7 @@ bind_on_assign(x_object *this__, x_obj_attr_t *attrs)
 //      ht_set("bind", (VAL) BIND_SENT, &bus->wall[0]);
       _ASET(this__, "$bind_state", "BIND_SENT");
       x_object_send_down(X_OBJECT(bus), tmp, NULL);
+      _REFPUT(tmp, NULL);
     }
 
   EXIT;
@@ -99,8 +100,6 @@ bind_exit(x_object *this__)
   char *ptr;
   struct x_bus *bus = (struct x_bus *) this__->bus;
   ENTER;
-
-  printf("%s:%s():%d\n",__FILE__,__FUNCTION__,__LINE__);
 
   state = _AGET(this__,"$bind_state");
 
@@ -124,15 +123,16 @@ bind_exit(x_object *this__)
           if (tmp)
             {
               /* send session initiate */
-              _m = _NEW("iq",NULL);
+              _m = _GNEW("iq",NULL);
               _ASET(_m, "type", "set");
               _ASET(_m, "id", "bind_2");
 
-              msg = _NEW("session",NULL);
+              msg = _GNEW("session",NULL);
               _ASET(msg, "xmlns", "urn:ietf:params:xml:ns:xmpp-session");
               _INS(_m, msg);
 
               x_object_send_down(tmp, _m, NULL);
+              _REFPUT(_m, NULL);
 
               /* append presence object to stream */
               msg = x_object_new("presence");
@@ -156,7 +156,7 @@ bind_init(void)
   bind_class.match = &bind_match;
   bind_class.on_assign = &bind_on_assign;
   bind_class.on_append = &bind_on_append;
-  bind_class.finalize = &bind_exit;
+  bind_class.commit = &bind_exit;
 
   x_class_register_ns(bind_class.cname, &bind_class,
       "urn:ietf:params:xml:ns:xmpp-bind");

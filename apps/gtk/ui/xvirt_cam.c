@@ -142,7 +142,7 @@ x_vcam_exit(x_object *this__)
 {
   virtual_camera_t *mctl = (virtual_camera_t *) this__;
   ENTER;
-  printf("%s:%s():%d\n",__FILE__,__FUNCTION__,__LINE__);
+//  printf("%s:%s():%d\n",__FILE__,__FUNCTION__,__LINE__);
 
   EXIT;
 }

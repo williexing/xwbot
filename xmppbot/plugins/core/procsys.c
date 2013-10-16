@@ -5,7 +5,10 @@
  *      Author: artemka
  */
 #undef DEBUG_PRFX
-#define DEBUG_PRFX "[presence] "
+#include <x_config.h>
+#if TRACE_PROCSYS_ON
+#define DEBUG_PRFX "[procsys] "
+#endif
 #include <xwlib/x_types.h>
 #include <xwlib/x_utils.h>
 #include <xwlib/x_obj.h>
@@ -38,21 +41,18 @@ __procsys_collect_network_ifaces(x_object *netdir)
 
       if (local_addrs[i]->sa_family == AF_INET)
         {
-
-          if (((struct sockaddr_in *) (void *) local_addrs[i])->sin_addr.s_addr
-              == INADDR_LOOPBACK
-              || ((struct sockaddr_in *) (void *) local_addrs[i])->sin_addr.s_addr
-                  == htonl(INADDR_LOOPBACK))
+          struct sockaddr_in *ip4addr = (struct sockaddr_in *) (void *) local_addrs[i];
+          if (ip4addr->sin_addr.s_addr == INADDR_LOOPBACK
+              || ip4addr->sin_addr.s_addr == htonl(INADDR_LOOPBACK))
             continue;
 
-          src =
-              (void *) &(((struct sockaddr_in *) (void *) local_addrs[i])->sin_addr);
+          src = (void *) &ip4addr->sin_addr;
           len = sizeof(struct sockaddr_in);
         }
       else if (local_addrs[i]->sa_family == AF_INET6)
         {
-          src =
-              (void *) &(((struct sockaddr_in6 *) (void *) local_addrs[i])->sin6_addr);
+          struct sockaddr_in6 *ip6addr = (struct sockaddr_in6 *) (void *) local_addrs[i];
+          src = (void *) &ip6addr->sin6_addr;
           len = sizeof(struct sockaddr_in6);
         }
       else
@@ -63,12 +63,12 @@ __procsys_collect_network_ifaces(x_object *netdir)
       x_inet_ntop(local_addrs[i]->sa_family, src, addrstrbuf, len);
 
       /* dataport candidate */
-      tmp = _NEW(_XS("$interface"),NULL);
+      tmp = _GNEW(_XS("$interface"),NULL);
       BUG_ON(!tmp);
       TRACE("ADDING IP ADDRESS '%s'\n", &addrstrbuf[0]);
       _ASET(tmp, _XS("ip"), &addrstrbuf[0]);
       _ASET(tmp, _XS("type"), (local_addrs[i]->sa_family == AF_INET6)
-          ? _XS("IPv4") : _XS("IPv6"));
+          ? _XS("IPv6") : _XS("IPv4"));
 
       _INS(netdir, tmp);
 
@@ -91,7 +91,7 @@ ___procsys_on_x_path_event(void *_obj)
 
   if (_obj)
     {
-      tmpo = x_object_add_path(_obj, "$networking", NULL);
+      tmpo = x_object_add_path(_obj, _XS("$networking"), NULL);
       __procsys_collect_network_ifaces(tmpo);
     }
 

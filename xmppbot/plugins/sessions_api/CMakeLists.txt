@@ -5,14 +5,15 @@ ENDIF(CMAKE_COMPILER_IS_GNUCC)
 #SET(BUILD_SHARED_LIBS ON)
 
 add_library(sessions sessions.c roster_pure_api.c 
-	ice_ctl.c session_api.c
-	event_domain.c ${PROJECT_SOURCE_DIR}/x_dll.c) 
+	ice_ctl.c session_api.c streams.c payload_ctl.c
+	ice_ctl_ggle.c event_domain.c SessionCtl.cpp ${PROJECT_SOURCE_DIR}/x_dll.c) 
 
 if(ANDROID)
 TARGET_LINK_LIBRARIES(sessions log)
 endif(ANDROID)
 
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CORE_CFLAGS} ${DEBUG_CFLAGS}")
+SET(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} ${CORE_CFLAGS} ${DEBUG_CFLAGS} -fno-rtti -fno-exceptions")
 
 #SET_TARGET_PROPERTIES(sessions PROPERTIES LINK_FLAGS -rdynamic)
 
@@ -27,9 +28,9 @@ link_directories( ${lib_contrib_dir}  )
 target_link_libraries( sessions xstun ) 
 
 IF(WIN32)
-target_link_libraries( sessions xw ev ws2_32 xstun ${CMAKE_THREAD_LIBS_INIT}) 
+target_link_libraries( sessions xw xw++ ev ws2_32 xstun ${CMAKE_THREAD_LIBS_INIT})
 ELSE(WIN32)
-target_link_libraries( sessions xw ev ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries( sessions xw xw++ ev ${CMAKE_THREAD_LIBS_INIT})
 ENDIF(WIN32)
 
 IF(ANDROID)

@@ -15,7 +15,7 @@
 
 #undef DEBUG_PRFX
 
-#include <xwlib/x_config.h>
+#include <x_config.h>
 #if TRACE_XIQ_ON
 #define DEBUG_PRFX "[iq] "
 #endif
@@ -138,17 +138,18 @@ static void
 iq_exit(x_object *this__)
 {
   /*  struct iq_object *ft = (struct iq_object *) this__;*/
-  printf("%s:%s():%d\n",__FILE__,__FUNCTION__,__LINE__);
+//  printf("%s:%s():%d\n",__FILE__,__FUNCTION__,__LINE__);
 }
 
 static int
 iq_tx(x_object *o, x_object *msg, x_obj_attr_t *ctx)
 {
-  struct iq_object *iqo;
+  x_object *iqo;
   const char *id;
 
   ENTER;
-  iqo = (struct iq_object *) _NEW("iq", NULL);
+  iqo = _GNEW("$message", NULL);
+  _SETNM(iqo,_XS("iq"));
 
   if (iqo)
     {
@@ -172,15 +173,25 @@ iq_tx(x_object *o, x_object *msg, x_obj_attr_t *ctx)
         }
 
       if (msg)
-        _INS(X_OBJECT(iqo), msg);
-
+      {
+        x_object_append_child_no_cb(X_OBJECT(iqo),
+                                    x_object_full_copy(msg));
+      }
+      
       _ASET(X_OBJECT(iqo), "from", _AGET(o, "to"));
       _ASET(X_OBJECT(iqo), "to", _AGET(o, "from"));
 
 //      x_object_print_path(iqo,0);
 //      x_object_print_path(o,0);
 
+      if (msg && EQ(_GETNM(msg),"jingle"))
+      {
+        x_object_print_path(iqo,0);
+      }
+
       x_object_send_down(_PARNT(o), X_OBJECT(iqo), NULL);
+      _REFPUT(iqo,NULL);
+
     }
 
   EXIT;
@@ -203,7 +214,7 @@ iq_init(void)
   iq_class.on_remove = &iq_on_remove;
   iq_class.on_release = &iq_on_release;
   iq_class.on_assign = &iq_on_assign;
-  iq_class.finalize = &iq_exit;
+  iq_class.commit = &iq_exit;
   iq_class.tx = &iq_tx;
 
   x_class_register_ns(iq_class.cname, &iq_class, "jabber:client");

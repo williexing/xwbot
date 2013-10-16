@@ -12,7 +12,7 @@
 #include "mynet.h"
 #include "x_vp8.h"
 
-static inline u_int8_t
+static __inline__ u_int8_t
 extract_bits(u_int8_t byte, int bits_count, int shift)
 {
   return (byte >> shift) & ((1 << bits_count) - 1);

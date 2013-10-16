@@ -41,3 +41,5 @@
 /* #undef PACKAGE_URL */
 /* #undef PACKAGE_VERSION */
 /* #undef VERSION */
+#define HAVE_INET_NTOP 1
+

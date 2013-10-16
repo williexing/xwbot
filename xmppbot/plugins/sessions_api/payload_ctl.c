@@ -11,6 +11,10 @@
 #include <xwlib/x_utils.h>
 #include <xwlib/x_obj.h>
 
+/**
+  * TODO This class SHOULD implement Jitter Buffer
+  */
+
 typedef struct media_ctl
 {
   x_object xobj;
@@ -33,6 +37,7 @@ static void
 payloadctl_on_create(x_object *o)
 {
   ENTER;
+  TRACE("\n");
   EXIT;
 }
 
@@ -40,41 +45,43 @@ static int
 payloadctl_on_append(x_object *o, x_object *parent)
 {
   media_ctl_t *mctl = (media_ctl_t *) o;
+  x_string_t _mtyp;
   ENTER;
-  mctl->encoders_directory = x_object_from_path(o->bus, "__proc/audio/");
+
+  TRACE("\n");
+
+  _mtyp = _ENV(o,_XS("mtype"));
+  if (_mtyp)
+    {
+      if (EQ(_mtyp,_XS("video")))
+        {
+          mctl->encoders_directory = x_object_from_path(o->bus,
+              "__proc/video/");
+        }
+      else if (EQ(_mtyp,_XS("audio")))
+        {
+          mctl->encoders_directory = x_object_from_path(o->bus,
+              "__proc/audio/");
+        }
+    }
 
   EXIT;
   return 0;
 }
 
-/**
- * Encoder's frame ready callback
- */
 static int
-payloadctl_on_encoded_data_ready(void *o, void *frame, int framelen)
-{
-  x_obj_attr_t hints =
-    { 0, 0, 0 };
-  media_ctl_t *mctl = (media_ctl_t *) o;
-
-  // send to next_hop;
-  if (!mctl->encoder_nexthop)
-    {
-      /* drop frame ... */
-    }
-
-  // send data to next hop object
-  x_object_try_write(mctl->encoder_nexthop, buf, len, &hints);
-
-}
-
-static int
-payloadctl_try_write(x_object *o, void *buf, u_int32_t len, x_obj_attr_t *attr)
+payloadctl_try_write(x_object *thiz, void *buf, u_int32_t len, x_obj_attr_t *attr)
 {
   int err;
   const char *idstr;
   x_object *codec;
-  media_ctl_t *mctl = (media_ctl_t *) o;
+//  media_ctl_t *mctl = (media_ctl_t *) thiz;
+
+  if(!_CRGET(thiz))
+  {
+    ERROR;
+    return (-1);
+  }
 
   if (!attr)
     {
@@ -90,7 +97,7 @@ payloadctl_try_write(x_object *o, void *buf, u_int32_t len, x_obj_attr_t *attr)
       return (-1);
     }
 
-  codec = _CHLD(o,idstr);
+  codec = _CHLD(thiz,idstr);
 
   if (!codec)
     {
@@ -98,7 +105,8 @@ payloadctl_try_write(x_object *o, void *buf, u_int32_t len, x_obj_attr_t *attr)
       return (-1);
     }
 
-  err = x_object_try_write(codec, buf, len, attr);
+//  TRACE("%s->write()\n",_GETNM(thiz));
+  err = _WRITE(codec, buf, len, attr);
 
   return err;
 }
@@ -132,6 +140,7 @@ static void UNUSED
 payloadctl_remove_cb(x_object *o)
 {
   ENTER;
+  _CRSET(o,0);
   EXIT;
 }
 
@@ -145,6 +154,9 @@ payloadctl_on_child_append(x_object *o, x_object *child)
   x_object *msg;
   x_object *body;
 
+  // ready if we have at least one child
+  TRACE("Added '%s'\n",_GETNM(child));
+  _CRSET(o,1);
   //  EXIT;
 }
 
@@ -169,7 +181,7 @@ __plugin_init void
 __payloadctl_init(void)
 {
   ENTER;
-  __payloadctl_objclass.cname = X_STRING("__rtppldctl");
+  __payloadctl_objclass.cname = _XS("__rtppldctl");
   __payloadctl_objclass.psize = (unsigned int) (sizeof(media_ctl_t)
       - sizeof(x_object));
 
@@ -183,7 +195,8 @@ __payloadctl_init(void)
   __payloadctl_objclass.try_write = &payloadctl_try_write;
 
   x_class_register_ns(__payloadctl_objclass.cname,
-      &__payloadctl_objclass,"jingle");
+      &__payloadctl_objclass,
+      "jingle");
   EXIT;
   return;
 }

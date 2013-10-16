@@ -31,6 +31,7 @@ EXPORT_SYMBOL x_string *x_string_new(void);
 EXPORT_SYMBOL void x_string_clear(x_string *xstr);
 EXPORT_SYMBOL void x_string_trunc(x_string *xstr);
 EXPORT_SYMBOL void x_string_delete(x_string *xstr);
+EXPORT_SYMBOL void x_string_rew(x_string *xstr);
 
 /*---------------------------------------------
  * New version of string API

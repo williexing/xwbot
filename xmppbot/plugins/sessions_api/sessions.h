@@ -32,6 +32,12 @@ enum
   XSESS_IO_FILE
 };
 
+#define CHANNEL_STATE_TRANSPORT_READY 0x1
+#define CHANNEL_STATE_MEDIA_READY 0x2
+//#define CHANNEL_STATE_MEDIA_READY 0x2
+#define CHANNEL_STATE_READY 0x3
+
+
 /**
  * @ingroup SESSION_API
  *
@@ -237,16 +243,12 @@ struct x_candidate_pair
  */
 #define MAX_CONN_PAIRS 256
 
-struct x_circbuf
-{
-  int blksiz;
-  void *start;
-  void *end;
-  void *head;
-  void *tail;
-};
+#define ICE_STUN_RELAXATION_COUNT 16
 
+#define ICE_FLAG_RTP_SUCCEEDED 0x4L
 
+#define PAYLOAD_CACHE_SIZE 127
+    
 typedef struct xiostream
 {
   x_object xobj;
@@ -270,16 +272,19 @@ typedef struct xiostream
 #ifndef __DISABLE_MULTITHREAD__
   /** input thread id */
   THREAD_T input_tid;
-  struct ev_loop *eventloop;
+  xevent_dom_t *eventloop;
 #endif
   struct ev_timer iowatcher_timer;
+  unsigned int timer_counter;
   struct ev_io iowatcher_ipv4;
   struct ev_io iowatcher_ipv4_ctl;
   turn_server_info_t turn_srv;
+
+  /* discovered network addresses */
   CS_DECL(_c_pairs_lock);
+
   struct x_candidate_pair *c_pairs[MAX_CONN_PAIRS];
   struct x_candidate_pair **c_pairs_top;
-
   struct x_candidate_pair *c_pair_last_success;
 
   x_candidate *locals[MAX_CONN_PAIRS];
@@ -287,15 +292,17 @@ typedef struct xiostream
 
   x_candidate *remotes[MAX_CONN_PAIRS];
   x_candidate **remotes_top;
+  /* discovered network addresses--- */
 
   /**
    * Media object / payload acceptor
    * It should route packets by their payload-type
    */
-  x_object *media_owner;
+//  x_object *media_owner;
+  x_object *media_owner_cache[PAYLOAD_CACHE_SIZE];
 
   /** Array of circular buffers */
-  struct x_circbuf circbuf[3];
+//  struct x_circbuf circbuf[3];
 
 } x_io_stream;
 
@@ -318,10 +325,9 @@ typedef struct xio
 enum
 {
   SESSION_NEW = 0,
-  SESSION_READY,
+  SESSION_WAITING,
   SESSION_ACTIVE,
-  SESSION_STOPPED,
-  SESSION_FINISHED,
+  SESSION_TIMED_OUT,
 };
 
 enum
@@ -363,40 +369,32 @@ typedef struct xcommonsession
 #define CAMERA_CLASS_STR "$camera"
 #define DISPLAY_CLASS_STR "dataplayer"
 
-EXPORT_SYMBOL x_common_session *x_session_open(const char *jid_remote,
-    x_object *context, x_obj_attr_t *hints, int flags);
-EXPORT_SYMBOL x_object *x_session_channel_open(x_object *ctx, const char *rjid, const char *sid,
-    const char *ch_name);
+#define MEDIA_IO_MODE_IN 0
+#define MEDIA_IO_MODE_OUT 1
+
+EXPORT_SYMBOL x_common_session *x_session_open(
+    const char *jid_remote, x_object *context, x_obj_attr_t *hints, int flags);
+EXPORT_SYMBOL int x_session_close(
+    const char *jid_remote, x_object *context, x_obj_attr_t *hints, int flags);
+EXPORT_SYMBOL x_object *x_session_channel_open(
+    x_object *ctx, const char *rjid, const char *sid,const char *ch_name);
 EXPORT_SYMBOL x_object *x_session_channel_open2(x_object *sesso, const char *ch_name);
 EXPORT_SYMBOL void x_session_channel_destroy_str (const char *sid, const char *ch_name);
 EXPORT_SYMBOL void x_session_channel_destroy_xobj(x_object *ch);
 EXPORT_SYMBOL int x_session_channel_read(x_object *ch, char *buf, size_t siz);
 EXPORT_SYMBOL int x_session_channel_write(x_object *ch, char *buf, size_t siz);
-EXPORT_SYMBOL int x_session_channel_set_transport_profile(x_object *cho, const char *tname, x_obj_attr_t *hints);
-EXPORT_SYMBOL int x_session_channel_set_media_profile(x_object *cho, const char *mname);
+EXPORT_SYMBOL int x_session_channel_set_transport_profile_ns(x_object *cho, const x_string_t tname, const x_string_t ns, x_obj_attr_t *hints);
+EXPORT_SYMBOL int x_session_channel_set_media_profile_ns(x_object *cho, const x_string_t mname, const x_string_t ns);
 EXPORT_SYMBOL void x_session_channel_add_transport_candidate(x_object *cho, x_object *cand);
-EXPORT_SYMBOL int x_session_add_payload_to_channel (x_object *cho, const x_string_t ptype, const x_string_t ptname, x_obj_attr_t *hints);
+EXPORT_SYMBOL int x_session_add_payload_to_channel (
+    x_object *cho, const x_string_t ptype,
+    const x_string_t ptname, int io_mod, x_obj_attr_t *hints);
+EXPORT_SYMBOL int
+x_session_channel_map_flow_twin(
+        x_object *cho, const x_string_t src,
+        const x_string_t dst);
 EXPORT_SYMBOL int x_session_set_channel_io_mode(x_object *cho, int mode);
-
-/*x_common_session *x_session_find(x_object *root, x_obj_attr_t *attrs);*/
-X_DEPRECATED EXPORT_SYMBOL int x_session_open_io(x_common_session *sess, int iod, int flags);
-X_DEPRECATED EXPORT_SYMBOL void x_session_close_io(x_common_session *sess, int iod);
-X_DEPRECATED EXPORT_SYMBOL int x_session_read_io(x_common_session *sess, int iod, char *buf, size_t siz);
-X_DEPRECATED EXPORT_SYMBOL int x_session_write_io(x_common_session *sess, int iod, char *buf, size_t siz);
-X_DEPRECATED EXPORT_SYMBOL void x_session_register_ioread_callback(x_common_session *sess, int io,
-    x_session_write_cb_f *cb);
-/**
- * @}
- */
-
-/**
- * @defgroup ROSTER_API Roster API
- *
- * @{
- */
-EXPORT_SYMBOL x_object *xi_get_roster_entry(const char *jid, x_obj_attr_t *hints);
-EXPORT_SYMBOL x_object *xi_del_roster_entry(const char *jid);
-EXPORT_SYMBOL x_object *xi_add_roster_entry(const char *jid);
+EXPORT_SYMBOL void x_session_start(x_object *sess);
 /**
  * @}
  */

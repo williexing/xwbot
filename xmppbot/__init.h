@@ -35,3 +35,8 @@ void xiapi_init(void);
 void xbus_lib_init(void);
 void xmppparser_init(void);
 void x_vpx_init(void);
+void   procsys_init(void);
+void   x_theora_plugin_init(void);
+void x_ilbc_init(void);
+void x_speeex_init(void);
+void x_hid_codec_init(void);

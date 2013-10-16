@@ -8,7 +8,7 @@ test1(int i)
   x_object *xobj;
   for (; i > 0; i--)
     {
-      xobj = _NEW("testobj",NULL);
+      xobj = _GNEW("testobj",NULL);
       _REFPUT(xobj, NULL);
     }
 }
@@ -49,12 +49,35 @@ test3(int i)
     }
   while (--i > 0);
 
-  len = x_object_to_path(xobj, pbuf, sizeof(pbuf) - 1);
-  printf("%s\n", pbuf);
-  printf("wrote %d\n", len);
+//  len = x_object_to_path(xobj, pbuf, sizeof(pbuf) - 1);
+//  printf("%s\n", pbuf);
+//  printf("wrote %d\n", len);
 
-  _REFPUT(root, NULL);
+  x_object_print_path(root,0);
 
+//  _REFPUT(root, NULL);
+  x_object_destroy_tree(root);
+}
+
+static void
+test4(void)
+{
+//    int len;
+//    char pbuf[8192 * 4];
+    x_object *testo;
+
+    testo = _GNEW("testobj","default");
+    x_object_vassign(testo,
+                     1,"key1","val1",
+                     1,"key2","val2",
+                     1,"key3","val3",
+                     1,"key4","val4",
+                     1,"key5","val5",
+                     0);
+
+    x_object_print_path(testo,0);
+
+    _REFPUT(testo, NULL);
 }
 
 int
@@ -68,6 +91,9 @@ main(int argc, char **argv)
   printf("ok!");
   getchar();
   test3(cnt);
+  printf("ok!");
+  getchar();
+  test4();
   printf("ok!");
   getchar();
 }

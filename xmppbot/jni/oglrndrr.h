@@ -9,15 +9,74 @@ extern "C"
   {
 #endif
 
+#ifdef JNI_VERSION_1_4
+#define JNI_VER JNI_VERSION_1_4
+#endif
+// JDK 1.5 used JNI_VERSION 1.4!  But, just in case, keep it here.
+#ifdef JNI_VERSION_1_5
+#undef JNI_VER
+#define JNI_VER JNI_VERSION_1_5
+#endif
+#ifdef JNI_VERSION_1_6
+#undef JNI_VER
+#define JNI_VER JNI_VERSION_1_6
+#endif
+
+#define DROID_CAMERA_CLASS "org/xw/CameraPreview"
+#define DROID_GOBEESYSTEM_CLASS "org/xw/GobeeMeSystem"
+#define DROID_DISPLAY_CLASS "org/xw/GobeeDisplay"
+
+#include <xwlib/x_types.h>
+#include <xwlib/x_utils.h>
+#include <xwlib/x_obj.h>
+
+typedef struct
+{
+  int width;
+  int height;
+  int stride;
+  unsigned char *data;
+} img_plane;
+
+typedef img_plane img_plane_buffer[3];
+
+typedef struct virtual_display
+{
+  x_object xobj;
+
+  int left_top_x;
+  int left_top_y;
+  int viewportWidth;
+  int viewportHeight;
+
+  int frameWidth;
+  int frameHeight;
+  int frameStride;
+
+  int displayWidth;
+  int displayHeight;
+
+  JNIEnv *env;
+  jobject jobj;
+} virtual_display_t;
+
+JNIEXPORT jint JNICALL
+droid_camera_on_setup_frame(JNIEnv *env, jobject jobj, jlong xoid,
+    jint w, jint h, jint typ);
+
+JNIEXPORT jint JNICALL
+droid_camera_on_new_frame(JNIEnv *env, jobject jobj, jlong xoid,
+    jbyteArray buf, jint w, jint h, jint stride);
+
 /*
  * Class:     com_xw_OpenGLRenderer
  * Method:    draw_native_scene
  * Signature: ([III)V
  */
-JNIEXPORT void
+JNIEXPORT
+void
 JNICALL
-Java_com_xw_OpenGLRenderer_draw_1native_1scene(JNIEnv *, jobject, jintArray,
-    jint, jint);
+n_emit_render_frame(JNIEnv *, jobject, jlong xoid, jintArray, jint, jint);
 
 /*
  * Class:     com_xw_OpenGLRenderer
@@ -26,7 +85,7 @@ Java_com_xw_OpenGLRenderer_draw_1native_1scene(JNIEnv *, jobject, jintArray,
  */
 JNIEXPORT void
 JNICALL
-Java_com_xw_OpenGLRenderer_on_1surface(JNIEnv *, jobject);
+n_emit_new_display(JNIEnv *, jobject, jlong xoid);
 
 /*
  * Class:     com_xw_OpenGLRenderer
@@ -35,41 +94,44 @@ Java_com_xw_OpenGLRenderer_on_1surface(JNIEnv *, jobject);
  */
 JNIEXPORT void
 JNICALL
-Java_com_xw_OpenGLRenderer_on_1surface_1changed(JNIEnv *, jobject, jint, jint);
+n_emit_setup_display(JNIEnv *, jobject, jlong xoid, jint, jint);
 
-#undef com_xw_xbus_XBus_MIN_PRIORITY
-#define com_xw_xbus_XBus_MIN_PRIORITY 1L
-#undef com_xw_xbus_XBus_NORM_PRIORITY
-#define com_xw_xbus_XBus_NORM_PRIORITY 5L
-#undef com_xw_xbus_XBus_MAX_PRIORITY
-#define com_xw_xbus_XBus_MAX_PRIORITY 10L
 /*
  * Class:     com_xw_xbus_XBus
  * Method:    xw_connect
  * Signature: (Ljava/lang/String;Ljava/lang/String;)V
  */
-JNIEXPORT jlong
+JNIEXPORT
+jlong
 JNICALL
-Java_com_xw_xbus_XBus_xw_1init(JNIEnv *, jobject, jstring, jstring);
+gobee_jni_bus_init(JNIEnv *, jobject, jstring, jstring);
+
+JNIEXPORT void
+JNICALL
+gobee_jni_bus_add_ip(JNIEnv *env,
+    jobject obj, jlong _lbus, jstring _ip);
 
 /*
  * Class:     com_xw_xbus_XBus
  * Method:    xw_connect
  * Signature: (J)J
  */
-JNIEXPORT void
+JNIEXPORT
+void
 JNICALL
-Java_com_xw_xbus_XBus_xw_1connect
-  (JNIEnv *, jobject, jlong);
+gobee_jni_bus_connect(JNIEnv *, jobject, jlong);
 
 /*
- * Class:     com_xw_xbus_XBus
- * Method:    xw_get_roster
- * Signature: ()V
+ * Class:     org_xw_GobeeDisplay
+ * Method:    _n_emit_hid_event
+ * Signature: (JIIII)V
  */
 JNIEXPORT void
 JNICALL
-Java_com_xw_xbus_XBus_xw_1get_1roster(JNIEnv *, jobject, jlong);
+n_emit_hid_event
+  (JNIEnv *jenv, jobject jobj, jlong xoid,
+      jint tip, jint x, jint y, jint buttons);
+
 
 #ifdef __cplusplus
 }

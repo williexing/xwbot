@@ -1,0 +1,619 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		B82150BC16F7E4C0000346D6 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B82150BB16F7E4C0000346D6 /* CoreVideo.framework */; };
+		B82150BE16F7E506000346D6 /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B82150BD16F7E506000346D6 /* CoreMedia.framework */; };
+		B85430DD16DD728D0022112D /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F26A5BB7150AD09A00AECC1D /* Foundation.framework */; };
+		B880385216D6D96900ED1571 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B880385116D6D96900ED1571 /* AVFoundation.framework */; };
+		B89BE09F16FE617400879176 /* eagl_common.m in Sources */ = {isa = PBXBuildFile; fileRef = B89BE09916FE617400879176 /* eagl_common.m */; };
+		B89BE0A016FE617400879176 /* gl_common.c in Sources */ = {isa = PBXBuildFile; fileRef = B89BE09A16FE617400879176 /* gl_common.c */; };
+		B89BE0A116FE617400879176 /* RGB565Shader.fsh in Sources */ = {isa = PBXBuildFile; fileRef = B89BE09C16FE617400879176 /* RGB565Shader.fsh */; };
+		B89BE0A216FE617400879176 /* YuvShader.fsh in Sources */ = {isa = PBXBuildFile; fileRef = B89BE09D16FE617400879176 /* YuvShader.fsh */; };
+		B89BE0A316FE617400879176 /* YuvShader.vsh in Sources */ = {isa = PBXBuildFile; fileRef = B89BE09E16FE617400879176 /* YuvShader.vsh */; };
+		B8F9011816E2D4B200D71EF4 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B8F9011716E2D4B200D71EF4 /* CoreAudio.framework */; };
+		B8F9011A16E2D9D500D71EF4 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B8F9011916E2D9D500D71EF4 /* AudioToolbox.framework */; };
+		B8F9011E16E2DE2F00D71EF4 /* OpenAL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B8F9011D16E2DE2F00D71EF4 /* OpenAL.framework */; };
+		F259972F1510013700C97559 /* OK_57x57.png in Resources */ = {isa = PBXBuildFile; fileRef = F259972D1510013700C97559 /* OK_57x57.png */; };
+		F25997301510013700C97559 /* OK_114x114.png in Resources */ = {isa = PBXBuildFile; fileRef = F259972E1510013700C97559 /* OK_114x114.png */; };
+		F26A5BB6150AD09A00AECC1D /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F26A5BB5150AD09A00AECC1D /* UIKit.framework */; };
+		F26A5BBA150AD09A00AECC1D /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F26A5BB9150AD09A00AECC1D /* CoreGraphics.framework */; };
+		F26A5BE0150AD09A00AECC1D /* SenTestingKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F26A5BDF150AD09A00AECC1D /* SenTestingKit.framework */; };
+		F26A5BE1150AD09A00AECC1D /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F26A5BB5150AD09A00AECC1D /* UIKit.framework */; };
+		F26A5BE2150AD09A00AECC1D /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F26A5BB7150AD09A00AECC1D /* Foundation.framework */; };
+		F26A5BEA150AD09A00AECC1D /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = F26A5BE8150AD09A00AECC1D /* InfoPlist.strings */; };
+		F26A5BED150AD09A00AECC1D /* GobeeMeTests.m in Sources */ = {isa = PBXBuildFile; fileRef = F26A5BEC150AD09A00AECC1D /* GobeeMeTests.m */; };
+		F294913C1511453500C1EBEE /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = F294913B1511453500C1EBEE /* main.m */; };
+		F294914115114B9700C1EBEE /* GLKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F294914015114B9600C1EBEE /* GLKit.framework */; };
+		F294914315114BD400C1EBEE /* OpenGLES.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F294914215114BD400C1EBEE /* OpenGLES.framework */; };
+		F2A20A5415113EBC00E686E6 /* Gobee_AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = F2A20A5015113EBC00E686E6 /* Gobee_AppDelegate.m */; };
+		F2A20A5515113EBC00E686E6 /* Gobee_GLViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F2A20A5215113EBC00E686E6 /* Gobee_GLViewController.m */; };
+		F2A2958E150FFBFC005826E6 /* OK.png in Resources */ = {isa = PBXBuildFile; fileRef = F2A2958D150FFBFC005826E6 /* OK.png */; };
+		F2A29591150FFC92005826E6 /* gobee.png in Resources */ = {isa = PBXBuildFile; fileRef = F2A29590150FFC92005826E6 /* gobee.png */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		F26A5BE3150AD09A00AECC1D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F26A5BA8150AD09900AECC1D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F26A5BB0150AD09900AECC1D;
+			remoteInfo = GobeeMe;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		B82150BB16F7E4C0000346D6 /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = System/Library/Frameworks/CoreVideo.framework; sourceTree = SDKROOT; };
+		B82150BD16F7E506000346D6 /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
+		B880385116D6D96900ED1571 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
+		B89BE09816FE617400879176 /* eagl_common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = eagl_common.h; sourceTree = "<group>"; };
+		B89BE09916FE617400879176 /* eagl_common.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = eagl_common.m; sourceTree = "<group>"; };
+		B89BE09A16FE617400879176 /* gl_common.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = gl_common.c; sourceTree = "<group>"; };
+		B89BE09B16FE617400879176 /* gl_common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gl_common.h; sourceTree = "<group>"; };
+		B89BE09C16FE617400879176 /* RGB565Shader.fsh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; path = RGB565Shader.fsh; sourceTree = "<group>"; };
+		B89BE09D16FE617400879176 /* YuvShader.fsh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; path = YuvShader.fsh; sourceTree = "<group>"; };
+		B89BE09E16FE617400879176 /* YuvShader.vsh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; path = YuvShader.vsh; sourceTree = "<group>"; };
+		B8F9011716E2D4B200D71EF4 /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
+		B8F9011916E2D9D500D71EF4 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
+		B8F9011D16E2DE2F00D71EF4 /* OpenAL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenAL.framework; path = System/Library/Frameworks/OpenAL.framework; sourceTree = SDKROOT; };
+		F259972D1510013700C97559 /* OK_57x57.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = OK_57x57.png; sourceTree = "<group>"; };
+		F259972E1510013700C97559 /* OK_114x114.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = OK_114x114.png; sourceTree = "<group>"; };
+		F26A5BB1150AD09A00AECC1D /* GobeeMe.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GobeeMe.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F26A5BB5150AD09A00AECC1D /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		F26A5BB7150AD09A00AECC1D /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		F26A5BB9150AD09A00AECC1D /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+		F26A5BDE150AD09A00AECC1D /* GobeeMeTests.octest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GobeeMeTests.octest; sourceTree = BUILT_PRODUCTS_DIR; };
+		F26A5BDF150AD09A00AECC1D /* SenTestingKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SenTestingKit.framework; path = Library/Frameworks/SenTestingKit.framework; sourceTree = DEVELOPER_DIR; };
+		F26A5BE7150AD09A00AECC1D /* GobeeMeTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GobeeMeTests-Info.plist"; sourceTree = "<group>"; };
+		F26A5BE9150AD09A00AECC1D /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		F26A5BEB150AD09A00AECC1D /* GobeeMeTests.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = GobeeMeTests.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
+		F26A5BEC150AD09A00AECC1D /* GobeeMeTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = GobeeMeTests.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
+		F294913B1511453500C1EBEE /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = main.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
+		F294913D1511454700C1EBEE /* GobeeMe-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GobeeMe-Info.plist"; sourceTree = "<group>"; };
+		F294914015114B9600C1EBEE /* GLKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLKit.framework; path = System/Library/Frameworks/GLKit.framework; sourceTree = SDKROOT; };
+		F294914215114BD400C1EBEE /* OpenGLES.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGLES.framework; path = System/Library/Frameworks/OpenGLES.framework; sourceTree = SDKROOT; };
+		F2A20A5015113EBC00E686E6 /* Gobee_AppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = Gobee_AppDelegate.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
+		F2A20A5115113EBC00E686E6 /* Gobee_AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = Gobee_AppDelegate.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
+		F2A20A5215113EBC00E686E6 /* Gobee_GLViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = Gobee_GLViewController.m; sourceTree = "<group>"; };
+		F2A20A5315113EBC00E686E6 /* Gobee_GLViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = Gobee_GLViewController.h; sourceTree = "<group>"; };
+		F2A2958D150FFBFC005826E6 /* OK.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = OK.png; sourceTree = "<group>"; };
+		F2A29590150FFC92005826E6 /* gobee.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = gobee.png; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		F26A5BAE150AD09900AECC1D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F294914315114BD400C1EBEE /* OpenGLES.framework in Frameworks */,
+				B82150BE16F7E506000346D6 /* CoreMedia.framework in Frameworks */,
+				B82150BC16F7E4C0000346D6 /* CoreVideo.framework in Frameworks */,
+				B8F9011E16E2DE2F00D71EF4 /* OpenAL.framework in Frameworks */,
+				B8F9011A16E2D9D500D71EF4 /* AudioToolbox.framework in Frameworks */,
+				B8F9011816E2D4B200D71EF4 /* CoreAudio.framework in Frameworks */,
+				B85430DD16DD728D0022112D /* Foundation.framework in Frameworks */,
+				B880385216D6D96900ED1571 /* AVFoundation.framework in Frameworks */,
+				F294914115114B9700C1EBEE /* GLKit.framework in Frameworks */,
+				F26A5BB6150AD09A00AECC1D /* UIKit.framework in Frameworks */,
+				F26A5BBA150AD09A00AECC1D /* CoreGraphics.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F26A5BDA150AD09A00AECC1D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F26A5BE0150AD09A00AECC1D /* SenTestingKit.framework in Frameworks */,
+				F26A5BE1150AD09A00AECC1D /* UIKit.framework in Frameworks */,
+				F26A5BE2150AD09A00AECC1D /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		B8F9011C16E2DCF100D71EF4 /* gobeeLibs */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = gobeeLibs;
+			sourceTree = "<group>";
+		};
+		F26A5BA6150AD09900AECC1D = {
+			isa = PBXGroup;
+			children = (
+				B82150BD16F7E506000346D6 /* CoreMedia.framework */,
+				B82150BB16F7E4C0000346D6 /* CoreVideo.framework */,
+				B8F9011D16E2DE2F00D71EF4 /* OpenAL.framework */,
+				B8F9011C16E2DCF100D71EF4 /* gobeeLibs */,
+				F2A2958F150FFC05005826E6 /* images */,
+				F26A5BBB150AD09A00AECC1D /* GobeeMe */,
+				F26A5BE5150AD09A00AECC1D /* GobeeMeTests */,
+				F26A5BB4150AD09A00AECC1D /* Frameworks */,
+				F26A5BB2150AD09A00AECC1D /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		F26A5BB2150AD09A00AECC1D /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				F26A5BB1150AD09A00AECC1D /* GobeeMe.app */,
+				F26A5BDE150AD09A00AECC1D /* GobeeMeTests.octest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		F26A5BB4150AD09A00AECC1D /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				B8F9011916E2D9D500D71EF4 /* AudioToolbox.framework */,
+				B8F9011716E2D4B200D71EF4 /* CoreAudio.framework */,
+				B880385116D6D96900ED1571 /* AVFoundation.framework */,
+				F294914215114BD400C1EBEE /* OpenGLES.framework */,
+				F294914015114B9600C1EBEE /* GLKit.framework */,
+				F26A5BB5150AD09A00AECC1D /* UIKit.framework */,
+				F26A5BB7150AD09A00AECC1D /* Foundation.framework */,
+				F26A5BB9150AD09A00AECC1D /* CoreGraphics.framework */,
+				F26A5BDF150AD09A00AECC1D /* SenTestingKit.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		F26A5BBB150AD09A00AECC1D /* GobeeMe */ = {
+			isa = PBXGroup;
+			children = (
+				B89BE09816FE617400879176 /* eagl_common.h */,
+				B89BE09916FE617400879176 /* eagl_common.m */,
+				B89BE09A16FE617400879176 /* gl_common.c */,
+				B89BE09B16FE617400879176 /* gl_common.h */,
+				B89BE09C16FE617400879176 /* RGB565Shader.fsh */,
+				B89BE09D16FE617400879176 /* YuvShader.fsh */,
+				B89BE09E16FE617400879176 /* YuvShader.vsh */,
+				F294913D1511454700C1EBEE /* GobeeMe-Info.plist */,
+				F294913B1511453500C1EBEE /* main.m */,
+				F2A20A5015113EBC00E686E6 /* Gobee_AppDelegate.m */,
+				F2A20A5115113EBC00E686E6 /* Gobee_AppDelegate.h */,
+				F2A20A5215113EBC00E686E6 /* Gobee_GLViewController.m */,
+				F2A20A5315113EBC00E686E6 /* Gobee_GLViewController.h */,
+			);
+			path = GobeeMe;
+			sourceTree = "<group>";
+		};
+		F26A5BE5150AD09A00AECC1D /* GobeeMeTests */ = {
+			isa = PBXGroup;
+			children = (
+				F26A5BEB150AD09A00AECC1D /* GobeeMeTests.h */,
+				F26A5BEC150AD09A00AECC1D /* GobeeMeTests.m */,
+				F26A5BE6150AD09A00AECC1D /* Supporting Files */,
+			);
+			path = GobeeMeTests;
+			sourceTree = "<group>";
+		};
+		F26A5BE6150AD09A00AECC1D /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				F26A5BE7150AD09A00AECC1D /* GobeeMeTests-Info.plist */,
+				F26A5BE8150AD09A00AECC1D /* InfoPlist.strings */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		F2A2958F150FFC05005826E6 /* images */ = {
+			isa = PBXGroup;
+			children = (
+				F259972D1510013700C97559 /* OK_57x57.png */,
+				F259972E1510013700C97559 /* OK_114x114.png */,
+				F2A29590150FFC92005826E6 /* gobee.png */,
+				F2A2958D150FFBFC005826E6 /* OK.png */,
+			);
+			name = images;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		F26A5BB0150AD09900AECC1D /* GobeeMe */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F26A5BF0150AD09A00AECC1D /* Build configuration list for PBXNativeTarget "GobeeMe" */;
+			buildPhases = (
+				F26A5BAD150AD09900AECC1D /* Sources */,
+				F26A5BAE150AD09900AECC1D /* Frameworks */,
+				F26A5BAF150AD09900AECC1D /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = GobeeMe;
+			productName = GobeeMe;
+			productReference = F26A5BB1150AD09A00AECC1D /* GobeeMe.app */;
+			productType = "com.apple.product-type.application";
+		};
+		F26A5BDD150AD09A00AECC1D /* GobeeMeTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F26A5BF3150AD09A00AECC1D /* Build configuration list for PBXNativeTarget "GobeeMeTests" */;
+			buildPhases = (
+				F26A5BD9150AD09A00AECC1D /* Sources */,
+				F26A5BDA150AD09A00AECC1D /* Frameworks */,
+				F26A5BDB150AD09A00AECC1D /* Resources */,
+				F26A5BDC150AD09A00AECC1D /* ShellScript */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				F26A5BE4150AD09A00AECC1D /* PBXTargetDependency */,
+			);
+			name = GobeeMeTests;
+			productName = GobeeMeTests;
+			productReference = F26A5BDE150AD09A00AECC1D /* GobeeMeTests.octest */;
+			productType = "com.apple.product-type.bundle";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		F26A5BA8150AD09900AECC1D /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0460;
+			};
+			buildConfigurationList = F26A5BAB150AD09900AECC1D /* Build configuration list for PBXProject "GobeeMe" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				English,
+			);
+			mainGroup = F26A5BA6150AD09900AECC1D;
+			productRefGroup = F26A5BB2150AD09A00AECC1D /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				F26A5BB0150AD09900AECC1D /* GobeeMe */,
+				F26A5BDD150AD09A00AECC1D /* GobeeMeTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		F26A5BAF150AD09900AECC1D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F2A2958E150FFBFC005826E6 /* OK.png in Resources */,
+				F2A29591150FFC92005826E6 /* gobee.png in Resources */,
+				F259972F1510013700C97559 /* OK_57x57.png in Resources */,
+				F25997301510013700C97559 /* OK_114x114.png in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F26A5BDB150AD09A00AECC1D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F26A5BEA150AD09A00AECC1D /* InfoPlist.strings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		F26A5BDC150AD09A00AECC1D /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Run the unit tests in this test bundle.\n\"${SYSTEM_DEVELOPER_DIR}/Tools/RunUnitTests\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		F26A5BAD150AD09900AECC1D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F2A20A5415113EBC00E686E6 /* Gobee_AppDelegate.m in Sources */,
+				F2A20A5515113EBC00E686E6 /* Gobee_GLViewController.m in Sources */,
+				F294913C1511453500C1EBEE /* main.m in Sources */,
+				B89BE09F16FE617400879176 /* eagl_common.m in Sources */,
+				B89BE0A016FE617400879176 /* gl_common.c in Sources */,
+				B89BE0A116FE617400879176 /* RGB565Shader.fsh in Sources */,
+				B89BE0A216FE617400879176 /* YuvShader.fsh in Sources */,
+				B89BE0A316FE617400879176 /* YuvShader.vsh in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F26A5BD9150AD09A00AECC1D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F26A5BED150AD09A00AECC1D /* GobeeMeTests.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		F26A5BE4150AD09A00AECC1D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F26A5BB0150AD09900AECC1D /* GobeeMe */;
+			targetProxy = F26A5BE3150AD09A00AECC1D /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		F26A5BE8150AD09A00AECC1D /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				F26A5BE9150AD09A00AECC1D /* en */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		F26A5BEE150AD09A00AECC1D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ADDITIONAL_SDKS = "";
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_ARC = NO;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_CPP_EXCEPTIONS = YES;
+				GCC_ENABLE_CPP_RTTI = NO;
+				GCC_LINK_WITH_DYNAMIC_LIBRARIES = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_STRICT_ALIASING = NO;
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				GCC_WARN_ABOUT_INVALID_OFFSETOF_MACRO = NO;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					../../xmppbot,
+					../../xmppbot/xwlib,
+					"../../xmppbot/xwlib++",
+					../../xmppbot/3dparty/libev/,
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 6.1;
+				LIBRARY_SEARCH_PATHS = (
+					../../xmppbot/output/Debug,
+					../../output/Debug,
+					"/Users/artemka/WORK/projects/gobee/gobee-ios-build/output/lib",
+					"/Users/artemka/WORK/projects/gobee/gobee-ios-build/output/Debug",
+				);
+				MACH_O_TYPE = mh_execute;
+				OTHER_CFLAGS = "-DIOS";
+				PRECOMPS_INCLUDE_HEADERS_FROM_BUILT_PRODUCTS_DIR = NO;
+				SDKROOT = iphoneos6.1;
+				TARGETED_DEVICE_FAMILY = 1;
+				"USER_HEADER_SEARCH_PATHS[arch=armv7]" = "";
+				VALID_ARCHS = "armv7 armv7s";
+			};
+			name = Debug;
+		};
+		F26A5BEF150AD09A00AECC1D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ADDITIONAL_SDKS = "";
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_ARC = NO;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = YES;
+				DEAD_CODE_STRIPPING = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_CPP_EXCEPTIONS = YES;
+				GCC_ENABLE_CPP_RTTI = NO;
+				GCC_LINK_WITH_DYNAMIC_LIBRARIES = YES;
+				GCC_STRICT_ALIASING = NO;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				GCC_WARN_ABOUT_INVALID_OFFSETOF_MACRO = NO;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					../../xmppbot,
+					../../xmppbot/xwlib,
+					"../../xmppbot/xwlib++",
+					../../xmppbot/3dparty/libev/,
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 6.1;
+				LIBRARY_SEARCH_PATHS = (
+					../../xmppbot/output/Debug,
+					../../output/Debug,
+					"/Users/artemka/WORK/projects/gobee/gobee-ios-build/output/lib",
+					"/Users/artemka/WORK/projects/gobee/gobee-ios-build/output/Debug",
+				);
+				MACH_O_TYPE = mh_execute;
+				OTHER_CFLAGS = "-DIOS";
+				PRECOMPS_INCLUDE_HEADERS_FROM_BUILT_PRODUCTS_DIR = NO;
+				SDKROOT = iphoneos6.1;
+				TARGETED_DEVICE_FAMILY = 1;
+				VALIDATE_PRODUCT = YES;
+				VALID_ARCHS = "armv7 armv7s";
+			};
+			name = Release;
+		};
+		F26A5BF1150AD09A00AECC1D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ADDITIONAL_SDKS = "";
+				CLANG_ENABLE_OBJC_ARC = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = NO;
+				GCC_LINK_WITH_DYNAMIC_LIBRARIES = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+				GCC_PREFIX_HEADER = "GobeeMe/GobeeMe-Prefix.pch";
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				INFOPLIST_FILE = "GobeeMe/GobeeMe-Info.plist";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(DEVELOPER_DIR)/WORK/projects/repo/x/xmppbot/output/Debug\"/**",
+					"\"$(DEVELOPER_DIR)/WORK/projects/repo/x/xmppbot/3dparty/openssl/ios\"",
+					"\"$(DEVELOPER_DIR)/WORK/projects/repo/x/xmppbot/plugins/video/codec/xvpx/vpx/ios\"",
+					"\"$(SRCROOT)/../../../gobee-ios-build/output/lib\"",
+					"\"$(SRCROOT)/../../../gobee-ios-build/output/Debug\"/**",
+					"\"$(SRCROOT)/../../../gobee-ios-build/output/Debug\"",
+				);
+				OTHER_CFLAGS = "-DIOS";
+				OTHER_LDFLAGS = (
+					"-lxofactory",
+					"-lxw",
+					"-lev",
+					"-lxmppbot",
+				);
+				PRECOMPS_INCLUDE_HEADERS_FROM_BUILT_PRODUCTS_DIR = NO;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+				VALID_ARCHS = armv7;
+				WRAPPER_EXTENSION = app;
+			};
+			name = Debug;
+		};
+		F26A5BF2150AD09A00AECC1D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ADDITIONAL_SDKS = "";
+				CLANG_ENABLE_OBJC_ARC = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = NO;
+				GCC_LINK_WITH_DYNAMIC_LIBRARIES = NO;
+				GCC_OPTIMIZATION_LEVEL = s;
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+				GCC_PREFIX_HEADER = "GobeeMe/GobeeMe-Prefix.pch";
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				INFOPLIST_FILE = "GobeeMe/GobeeMe-Info.plist";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(DEVELOPER_DIR)/WORK/projects/repo/x/xmppbot/output/Debug\"/**",
+					"\"$(DEVELOPER_DIR)/WORK/projects/repo/x/xmppbot/3dparty/openssl/ios\"",
+					"\"$(DEVELOPER_DIR)/WORK/projects/repo/x/xmppbot/plugins/video/codec/xvpx/vpx/ios\"",
+					"\"$(SRCROOT)/../../../gobee-ios-build/output/lib\"",
+					"\"$(SRCROOT)/../../../gobee-ios-build/output/Debug\"/**",
+					"\"$(SRCROOT)/../../../gobee-ios-build/output/Debug\"",
+				);
+				OTHER_CFLAGS = "-DIOS";
+				OTHER_LDFLAGS = (
+					"-lxofactory",
+					"-lxw",
+					"-lev",
+					"-lxmppbot",
+				);
+				PRECOMPS_INCLUDE_HEADERS_FROM_BUILT_PRODUCTS_DIR = NO;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+				VALID_ARCHS = armv7;
+				WRAPPER_EXTENSION = app;
+			};
+			name = Release;
+		};
+		F26A5BF4150AD09A00AECC1D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/GobeeMe.app/GobeeMe";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(SDKROOT)/Developer/Library/Frameworks",
+					"$(DEVELOPER_LIBRARY_DIR)/Frameworks",
+				);
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "GobeeMe/GobeeMe-Prefix.pch";
+				INFOPLIST_FILE = "GobeeMeTests/GobeeMeTests-Info.plist";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUNDLE_LOADER)";
+				WRAPPER_EXTENSION = octest;
+			};
+			name = Debug;
+		};
+		F26A5BF5150AD09A00AECC1D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/GobeeMe.app/GobeeMe";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(SDKROOT)/Developer/Library/Frameworks",
+					"$(DEVELOPER_LIBRARY_DIR)/Frameworks",
+				);
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "GobeeMe/GobeeMe-Prefix.pch";
+				INFOPLIST_FILE = "GobeeMeTests/GobeeMeTests-Info.plist";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUNDLE_LOADER)";
+				WRAPPER_EXTENSION = octest;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		F26A5BAB150AD09900AECC1D /* Build configuration list for PBXProject "GobeeMe" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F26A5BEE150AD09A00AECC1D /* Debug */,
+				F26A5BEF150AD09A00AECC1D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F26A5BF0150AD09A00AECC1D /* Build configuration list for PBXNativeTarget "GobeeMe" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F26A5BF1150AD09A00AECC1D /* Debug */,
+				F26A5BF2150AD09A00AECC1D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F26A5BF3150AD09A00AECC1D /* Build configuration list for PBXNativeTarget "GobeeMeTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F26A5BF4150AD09A00AECC1D /* Debug */,
+				F26A5BF5150AD09A00AECC1D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = F26A5BA8150AD09900AECC1D /* Project object */;
+}

@@ -3,22 +3,28 @@
 
 IF(CMAKE_COMPILER_IS_GNUCC)
 SET(ANSI_CFLAGS "-ansi -std=c89 -pedantic")
-SET(CORE_CFLAGS "-Wall -O2 -I./ ${DEBUG_CFLAGS}")
+SET(CORE_CFLAGS "-Wall -I./ ${DEBUG_CFLAGS}")
 ENDIF(CMAKE_COMPILER_IS_GNUCC)
+
+IF(IOS)
+SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DIOS")
+SET (COMPILE_FLAGS "${COMPILE_FLAGS} -DIOS")
+ENDIF(IOS)
 
 #SET(BUILD_SHARED_LIBS ON)
 
 # this includes system checking definitions
 INCLUDE(XConfig_H.cmake)
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/x_config.h.in 
-		${CMAKE_CURRENT_SOURCE_DIR}/x_config.h)
+		${LIBRARY_OUTPUT_PATH}/include/x_config.h)
 
+INCLUDE_DIRECTORIES(${LIBRARY_OUTPUT_PATH}/include)
 INCLUDE_DIRECTORIES( ${CMAKE_CURRENT_SOURCE_DIR} )
 
 #INCLUDE_DIRECTORIES( ${include_top_dir} )
 #INCLUDE_DIRECTORIES( "${include_top_dir}/include" )
 
-ADD_LIBRARY(xofactory x_objfactory.c x_utils.c x_string.c  x_ref.c x_lib.c)
+ADD_LIBRARY(xofactory x_objfactory.c x_utils.c x_string.c  x_ref.c x_lib.c x_stuff.c)
 #SET_TARGET_PROPERTIES(xofactory PROPERTIES VERSION 0.0.1 SOVERSION 0.0)
 #SET_TARGET_PROPERTIES(xofactory PROPERTIES COMPILE_FLAGS "${CORE_CFLAGS} ${ANSI_CFLAGS}")
 
@@ -69,10 +75,17 @@ SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "gobee")
 #SET(CPACK_GENERATOR "RPM")
 
 IF(NOT IOS)
-ADD_EXECUTABLE (test1 test1.c) 
+ADD_EXECUTABLE (test1 test1.c)
 TARGET_LINK_LIBRARIES(test1 xw)
 ADD_DEPENDENCIES( test1 xw )
 ENDIF(NOT IOS)
+
+
+IF(LINUX)
+ADD_EXECUTABLE (circbuf_test x_stuff.c)
+set_target_properties(circbuf_test PROPERTIES COMPILE_FLAGS -DUNIT_TEST)
+TARGET_LINK_LIBRARIES(circbuf_test xofactory)
+ENDIF(LINUX)
 
 INCLUDE(CPack)
 

@@ -74,4 +74,6 @@ typedef struct pointer_data
 typedef void ( udp_callback_fn_t)(void *data, int len, void *cb_data);
 int udp_listen(const char *host, int port, udp_callback_fn_t *cb_func, void *cb_data);
 
+#define MTU 1300
+
 #endif /* MYNET_H_ */

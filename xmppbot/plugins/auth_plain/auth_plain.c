@@ -13,7 +13,10 @@
 /* #include <sys/socket.h> */
 
 #undef DEBUG_PRFX
+#include <x_config.h>
+#if TRACE_XMPPAUTH_ON
 #define DEBUG_PRFX "[auth-plain] "
+#endif
 #include <xwlib/x_types.h>
 #include <xwlib/x_lib.h>
 #include <xmppagent.h>
@@ -88,9 +91,11 @@ auth_plain_on_append(x_object *me, x_object *parent)
 
   /* prepare auth stanza */
   str = xmpp_auth_get_plain_hash(unam, pw, jiddomain);
-  TRACE("Created new sasl string [%s:%s:%s]:\n%s\n",unam, pw, jiddomain,str);
+  TRACE("Created new sasl string [%s:%s:%s]:\n%s, parent='%s'\n",
+        unam, pw, jiddomain,str,_GETNM(parent));
 
-  msg = x_object_new("auth");
+  msg = _GNEW("$message", NULL);
+  _SETNM(msg, "auth");
   x_object_setattr(msg, "xmlns", "urn:ietf:params:xml:ns:xmpp-sasl");
   x_object_setattr(msg, "mechanism", "PLAIN");
   x_string_write(&msg->content, str, x_strlen(str));
@@ -98,7 +103,8 @@ auth_plain_on_append(x_object *me, x_object *parent)
     x_free(str);
 
   x_object_send_down(parent, msg, NULL);
-
+//  _REFPUT(msg, NULL);
+  
   EXIT;
   return 0;
 }
@@ -123,7 +129,7 @@ __x_plugin_visibility __plugin_init void
 	auth_plain_class.psize = 0;
 	auth_plain_class.match = &auth_plain_match;
 	auth_plain_class.on_append = &auth_plain_on_append;
-	auth_plain_class.finalize = &auth_plain_exit;
+	auth_plain_class.commit = &auth_plain_exit;
 	x_class_register(auth_plain_class.cname, &auth_plain_class);
 	return;
 }

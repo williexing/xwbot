@@ -12,8 +12,11 @@ INCLUDE(${PROJECT_SOURCE_DIR}/INCLUDES.cmk)
 
 LINK_DIRECTORIES( ${lib_contrib_dir}  )
 
+LINK_DIRECTORIES( ${CMAKE_BINARY_DIR}/output/lib )
 LINK_DIRECTORIES( ${include_top_dir}/3dparty/openssl/${X_ARCH}/ )
 INCLUDE_DIRECTORIES( ${include_top_dir}/3dparty/openssl/${X_ARCH}/include )
+INCLUDE_DIRECTORIES( ${include_contrib_dir} )
+INCLUDE_DIRECTORIES( ${CMAKE_BINARY_DIR}/output/include )
 
 if(BUILD_SHARED_LIBS)
 
@@ -40,6 +43,11 @@ target_link_libraries(sasl ssl crypto)
 target_link_libraries(tls ssl crypto)
 ENDIF(UNIX)
 
+IF(APPLE)
+target_link_libraries(sasl ssl crypto)
+target_link_libraries(tls ssl crypto)
+ENDIF(APPLE)
+
 IF(WIN32)
 target_link_libraries(sasl ssleay32 libeay32)
 target_link_libraries(tls ssleay32 libeay32)
@@ -62,18 +70,24 @@ else(BUILD_SHARED_LIBS)
 
 add_library(core STATIC procsys.c features.c stream.c sasl.c tls.c iq.c presence.c message.c) 
 IF(UNIX)
-target_link_libraries(core ssl crypto)
+target_link_libraries(core ssl crypto xbus sessions)
 ENDIF(UNIX)
 
 IF(WIN32)
-target_link_libraries(core ssleay32 libeay32)
+target_link_libraries(core ssleay32 libeay32 xbus sessions)
 ENDIF(WIN32)
 
 if(ANDROID)
-target_link_libraries(core ssl crypto log)
+target_link_libraries(core ssl crypto log xbus sessions)
 endif(ANDROID)
 
+IF(APPLE)
+target_link_libraries(core ssl crypto xbus sessions)
+ENDIF(APPLE)
+
 endif(BUILD_SHARED_LIBS)
+
+#add_dependencies(tls xw openssl)
 
 INCLUDE(CPack)
 

@@ -5,21 +5,35 @@
  *      Author: artemka
  */
 
-#include <sys/types.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
+#undef DEBUG_PRFX
+#define DEBUG_PRFX "[__inbandshell] "
+#include <xwlib/x_types.h>
+#include <xwlib/x_utils.h>
+#include <xwlib/x_obj.h>
 
-#include <xmppagent.h>
+#include <plugins/sessions_api/sessions.h>
 
-// shell job
-int shell_out[2];
-int shell_in[2];
-pid_t c_pid = 0; // child pid
-fd_set shellfds;
-char *shell_from;
+typedef struct inband_shell
+{
+    x_object xobj;
+    int shell_out[2];
+    int shell_in[2];
+
+    struct
+    {
+        int state;
+        volatile uint32_t cr0;
+    } regs;
+
+    struct ev_loop *shellevtloop;
+    struct ev_io shell_watcher;
+
+#ifndef __DISABLE_MULTITHREAD__
+    THREAD_T shell_tid;
+#endif
+    pid_t c_pid;
+} inband_shell_t;
+
 
 /**
  * Decodes 'src' string of content
@@ -32,337 +46,308 @@ static char *
 xmpp_content_decode(const char *src)
 {
 
-  int l;
-  char *dst;
+    int l;
+    char *dst;
 
-  ENTER;
+    ENTER;
 
-  if (src == NULL || !(l = strlen(src)))
+    if (src == NULL || !(l = strlen(src)))
     {
-      EXIT;
-      return NULL;
+        EXIT;
+        return NULL;
     }
 
-  dst = (char *) src;
+    dst = (char *) src;
 
-  while (*src)
+    while (*src)
     {
-      if (*src == '&')
+        if (*src == '&')
         {
-          if (!strcmp(src, "&amp;"))
+            if (!strcmp(src, "&amp;"))
             {
-              *dst++ = '&';
-              src += 4;
+                *dst++ = '&';
+                src += 4;
             }
-          else if (!strcmp(src, "&gt;"))
+            else if (!strcmp(src, "&gt;"))
             {
-              *dst++ = '>';
-              src += 3;
+                *dst++ = '>';
+                src += 3;
             }
-          else if (!strcmp(src, "&lt;"))
+            else if (!strcmp(src, "&lt;"))
             {
-              *dst++ = '<';
-              src += 3;
+                *dst++ = '<';
+                src += 3;
             }
-          else if (!strcmp(src, "&nbsp;"))
+            else if (!strcmp(src, "&nbsp;"))
             {
-              *dst++ = ' ';
-              src += 5;
+                *dst++ = ' ';
+                src += 5;
             }
         }
-      else
-        *dst++ = *src++;
+        else
+            *dst++ = *src++;
     }
 
-  EXIT;
-  return dst;
+    EXIT;
+    return dst;
 }
 
+
+#if 1
 /**
- * TODO Check stanza against special trusted ezxml node
- * in session structure
  */
 static int
-my_is_stanza_acceptable(struct x_bus *sess, ezxml_t __stnz)
+__ibs_shell_chk_nexthop(x_object *thiz)
 {
-  int err = 1;
-  char *str, *to;
-  const char *myjid;
-  const char *jdomain;
-  const char *uname;
-  ezxml_t acl;
+    int err = -1;
+    x_object *nxthop;
+    x_object *parent = _PARNT(thiz);
 
-  pthread_mutex_lock(&sess->lock);
-  myjid = ezxml_attr(sess->dbcore, "jid");
-  uname = ezxml_attr(sess->dbcore, "username");
-  jdomain = ezxml_attr(sess->dbcore, "domain");
 
-  str = (char *) ezxml_attr(__stnz, "from");
-  to = (char *) ezxml_attr(__stnz, "to");
-
-  /* TODO Possibly this is session specific iq's */
-  if (!str && !to)
+    if (!thiz->write_handler &&
+            parent)
     {
-      err = 0;
-      goto _fin;
+        nxthop = _CHLD(parent, MEDIA_OUT_CLASS_STR);
+        x_object_set_write_handler(thiz, nxthop);
     }
 
-  if (!strcasecmp(str, myjid))
-    {
-      TRACE("-ERROR! My own stanza\n");
-      err = 1;
-      goto _fin;
-    }
+    if (thiz->write_handler)
+        err = 0;
 
-  /* TODO Need smart acl cheking!!!! */
-  /* by default trust all non user jids */
-  if (!strchr(str, '@'))
-    {
-      err = 0;
-      goto _fin;
-    }
+    return err;
+}
 
-  /* default trustee */
-  if (!strncasecmp(str, myjid, strlen(uname) + strlen(jdomain) + 1))
-    {
-      err = 0;
-      goto _fin;
-    }
+static void
+__ibs_shell_on_data_cb(struct ev_loop *loop, struct ev_io *watcher, int mask)
+{
+    int err = 0;
+    inband_shell_t *thiz;
+    x_object *tmpo;
+    char buf[512];
+    //  x_string str = {0,0,0};
 
-  /* check against access list */
-  acl = ezxml_get(sess->dbcore, "acldb", -1);
-  if (!acl)
-    {
-      TRACE("-ERROR! No trustees available\n");
-      err = 1;
-      goto _fin;
-    }
+    TRACE("some data ready: reading...\n");
 
-  for (acl = ezxml_child(acl, "node"); acl; acl = ezxml_next(acl))
+    thiz = (inband_shell_t *) (((char *) watcher)
+                               - offsetof(inband_shell_t, shell_watcher));
+
+    if (mask & EV_READ)
     {
-      if (!strncasecmp(str, ezxml_attr(acl, "jid"), strlen(ezxml_attr(acl,
-          "jid"))))
+        TRACE("new data from shell\n");
+        if ((err = x_read(thiz->shell_out[0], buf, 511)) > 0)
         {
-          err = 0;
-          goto _fin;
+            buf[err] = '\0';
+            TRACE("<%s>\n", buf);
+            // write to out$media
+            if (thiz->xobj.write_handler
+                    || !__ibs_shell_chk_nexthop(thiz))
+            {
+                _WRITE(thiz->xobj.write_handler, buf, err, NULL);
+            }
         }
     }
 
-#if 0
-  /* FIXME Stream binding must be handled */
-  str = (char *)ezxml_attr(__stnz,"to");
-  if (str && strcmp(str,myjid))
-    {
-      TRACE("Not accepting messages for this resource (%s)!\n",str);
-      return 0;
-    }
-#endif
-
-  _fin: TRACE("%s => result:%d\n", str, err);
-  pthread_mutex_unlock(&sess->lock);
-  ezxml_set_attr(__stnz, "trusted", err ? "no" : "yes");
-  return err ? 0 : 1;
+    return;
 }
 
 /**
  *
  */
 static int
-create_shell_job(struct x_bus *sess, const char *from)
+__ibs_shell_job_new(void *thiz_)
 {
-  int err;
-  ENTER;
+    inband_shell_t *thiz = (inband_shell_t *) thiz_;
+    int err;
+    ENTER;
 
-  err = pipe(shell_in);
-  err = pipe(shell_out);
+    err = pipe(thiz->shell_in);
+    err = pipe(thiz->shell_out);
 
-  /* OK! Now process entire message */
-  if (!(c_pid = fork()))
+    if (!(thiz->c_pid = fork()))
     {
-      dup2(shell_out[1], 1);
-      dup2(shell_out[1], 2);
-      dup2(shell_in[0], 0);
+        dup2(thiz->shell_out[1], 1);
+        dup2(thiz->shell_out[1], 2);
+        dup2(thiz->shell_in[0], 0);
 
-      close(shell_out[0]);
-      close(shell_in[1]);
+        close(thiz->shell_out[0]);
+        close(thiz->shell_in[1]);
 
-      execl("/bin/sh", "sh", (char*) NULL);
-      exit(1);
+        TRACE("Shell started\n");
+        execl("/bin/sh", "sh", (char*) NULL);
+        exit(1);
     }
 
-  close(shell_out[1]);
-  close(shell_in[0]);
+    close(thiz->shell_out[1]);
+    close(thiz->shell_in[0]);
 
-  fcntl(shell_out[0], F_SETFL, O_NONBLOCK);
-  fcntl(shell_in[1], F_SETFL, O_NONBLOCK);
+    fcntl(thiz->shell_out[0], F_SETFL, O_NONBLOCK);
+    fcntl(thiz->shell_in[1], F_SETFL, O_NONBLOCK);
 
-  shell_from = x_strdup(from);
-  FD_SET(shell_out[0],&sess->rfds);
-  sess->maxfd = sess->maxfd > shell_out[0] ? sess->maxfd : shell_out[0];
+    ev_io_init(&thiz->shell_watcher, &__ibs_shell_on_data_cb, thiz->shell_out[0],
+            EV_READ /* | EV_WRITE */);
 
-  EXIT;
-  return 0;
+    EXIT;
+    return 0;
 }
 
-/**
- *
- */
-static int
-my_check_shell(struct x_bus *sess, fd_set *fds)
+static void *
+__ibs_shell_worker(void *thiz_)
 {
-  ezxml_t stnz1, stnz2;
-  int l;
-  char buf[256];
-  const char *myjid;
+    inband_shell_t *thiz = (inband_shell_t *) (void *) thiz_;
 
-  ENTER;
+    ENTER;
 
-  if (!FD_ISSET(shell_out[0], fds))
-    {
-      EXIT;
-      return -1;
-    }
-
-  l = read(shell_out[0], buf, sizeof(buf)  -1);
-  if (l <= 0)
-    return -1;
-
-  buf[l] = 0;
-
-  myjid = ezxml_attr(sess->dbcore, "jid");
-
-  stnz1 = ezxml_new("message");
-  ezxml_set_attr(stnz1, "type", "chat");
-  ezxml_set_attr(stnz1, "to", shell_from);
-  ezxml_set_attr(stnz1, "from", myjid);
-
-  stnz2 = ezxml_add_child(stnz1, "body", 0);
-  ezxml_set_txt_d(stnz2,buf);
-
-  xmpp_session_send_stanza(sess, stnz1);
-
-  if (stnz1)
-    ezxml_free(stnz1);
-
-  EXIT;
-  return 0;
-}
-
-/**
- *
- */
-static void
-my_on_message(struct x_bus *sess, ezxml_t __stnz)
-{
-  int err;
-  ezxml_t _stnz;
-  char *str = NULL;
-
-  ENTER;
-
-  if (__stnz == NULL)
-    {
-      TRACE("Invalid stanza\n");
-      return;
-    }
-
-  if (!my_is_stanza_acceptable(sess, __stnz))
-    return;
-
-  str = (char *) ezxml_attr(__stnz, "from");
-
-  // replace origin
-  if (shell_from && strcmp(shell_from, str))
-    {
-      free(shell_from);
-      shell_from = x_strdup(str);
-    }
-
-  /* Take a body */
-  _stnz = ezxml_get(__stnz, "body", -1);
-
-  // if no body
-  // TODO Filter <event> and <data> messages
-  if (!_stnz)
-    {
-      TRACE("No Body\n");
-      return;
-    }
-
-  if (_stnz->txt)
-    TRACE("Message = '%s'\n", _stnz->txt);
-
-  if (!c_pid)
-    if (create_shell_job(sess, ezxml_attr(__stnz, "from")))
-      return;
-
-  // handle special characters
-  if (!strcmp("^c", _stnz->txt))
-    {
-      if (_stnz->txt)
-        TRACE("SPECIAL CHARACTER = '%s'\n", _stnz->txt);
-      //                c = 0x3;
-      //                write(shell_in[1],&c,1);
-      err = write(shell_in[1], "$'\x3'\n", strlen("$'\x3'\n"));
-    }
-  else if (!strncmp("#send ", _stnz->txt, strlen("#send ")))
-    {
-#if 0
-      /* FIXME file sending test (REMOVE THIS!!!) */
-      xmpp_send_file(sess, str, _stnz->txt + strlen("#send "));
+    TRACE("Waiting on start condition...\n");
+#ifndef CS_DISABLED
+    //  CS_LOCK(CS2CS(thiz->lock));
 #endif
-    }
-  else
+
+    // set 'started' flag
+    thiz->regs.cr0 &= ~((uint32_t) (1 << 1));
+
+#ifndef __DISABLE_MULTITHREAD__
+    do
     {
-      err = write(shell_in[1], _stnz->txt, strlen(_stnz->txt));
-      // end line
-      err = write(shell_in[1], "\n", strlen("\n"));
+        TRACE("Started loop thread\n");
+        ev_loop(thiz->shellevtloop, 0);
     }
+    while (!(thiz->regs.cr0 & (1 << 0)) /* thread stop condition!!! */);
+#endif
+
+#ifndef CS_DISABLED
+    //  CS_UNLOCK(CS2CS(thiz->lock));
+#endif
+
+    EXIT;
+    return NULL;
 }
 
-/**
- * On iq handler
- * TODO It's not optimized handler!!
- * Spaguetti logic...
- */
-static void
-my_on_iq(struct x_bus *sess, ezxml_t __stnz)
+static int
+__ibs_shell_worker_start(inband_shell_t *thiz)
 {
+    int err;
+    ENTER;
 
-  ezxml_t _stnz;
-  char *str = NULL;
-  char *iq_id;
+    thiz->shellevtloop = ev_loop_new(EVFLAG_AUTO);
+    BUG_ON(!thiz->shellevtloop);
 
-  ENTER;
+    ev_io_start(thiz->shellevtloop, &thiz->shell_watcher);
 
-  if (__stnz == NULL)
-    return;
+#ifndef __DISABLE_MULTITHREAD__
+    x_thread_run(&thiz->shell_tid, &__ibs_shell_worker, (void *) thiz);
+#endif
 
-  if (!my_is_stanza_acceptable(sess, __stnz))
-    return;
-
-  str = (char *) ezxml_attr(__stnz, "type");
-  iq_id = (char *) ezxml_attr(__stnz, "id");
-
-  TRACE("->> IQ id='%s', type='%s'\n---\n '%s'\n---\n",
-      iq_id,str,__stnz->txt);
-  if (!strcmp("error", str))
-    xmpp_stanza2stdout(__stnz->child->sibling);
-
-  if (__stnz->child)
-    {
-      _stnz = __stnz->child;
-
-      TRACE("->> IQ child='%s'\n",
-          _stnz->name);
-
-      str = (char *) ezxml_attr(_stnz, "xmlns");
-      // route stanza
-      dbm_notify_providers(str, sess, _stnz);
-    }
-
+    EXIT;
+    return err;
 }
 
-struct xmpp_handler myhndlr =
-  { .on_message = my_on_message, .on_iq = my_on_iq, };
+#if 1
+static int
+__ibs_shell_worker_stop(inband_shell_t *thiz)
+{
+    /* cancel working thread */
+    thiz->regs.cr0 &= ~((uint32_t) (1 << 0));
 
+    ev_io_stop(thiz->shellevtloop, &thiz->shell_watcher);
+    ev_unloop(thiz->shellevtloop,EVUNLOOP_ALL);
+
+#ifdef HAVE_PTHREAD_H
+    pthread_cancel(thiz->shell_tid);
+
+    TRACE("Joining SHELL thread\n");
+    pthread_join(thiz->shell_tid,NULL);
+#endif
+}
+#endif
+
+
+static int
+inbandshell_on_append(x_object *o, x_object *parent)
+{
+    x_string_t name;
+    inband_shell_t *thiz = (inband_shell_t *) o;
+
+    TRACE("Creating SHELL job\n");
+    // create new shell process
+    __ibs_shell_job_new(thiz);
+
+    TRACE("Starting SHELL thread\n");
+    // start shell job
+    __ibs_shell_worker_start(thiz);
+
+    EXIT;
+    return 0;
+}
+
+
+static int
+inbandshell_try_write(x_object *o, void *buf, u_int32_t len, x_obj_attr_t *attr)
+{
+    int err;
+    x_object *tmpo;
+    inband_shell_t *shio = (inband_shell_t *) (void *) o;
+
+    TRACE("received message to write %s\n", buf);
+
+    err = x_write(shio->shell_in[1],buf,len);
+    err = x_write(shio->shell_in[1],"\n",1);
+
+    return err;
+}
+
+static x_object *
+inbandshell_on_assign(x_object *thiz, x_obj_attr_t *attrs)
+{
+    x_object_default_assign_cb(thiz, attrs);
+    return thiz;
+}
+
+static void
+inbandshell_remove_cb(x_object *o)
+{
+    inband_shell_t *thiz = (inband_shell_t *) (void *) o;
+    ENTER;
+    __ibs_shell_worker_stop(thiz);
+    EXIT;
+}
+
+static void UNUSED
+inbandshell_release_cb(x_object *o)
+{
+    ENTER;
+    EXIT;
+}
+
+/* matching function */
+static BOOL
+inbandshell_equals(x_object *o, x_obj_attr_t *attrs)
+{
+    return TRUE;
+}
+
+static struct xobjectclass __ibshell_class;
+
+__x_plugin_visibility
+__plugin_init void
+__inbandshell_init(void)
+{
+    ENTER;
+    __ibshell_class.cname = X_STRING("__ibshell");
+    __ibshell_class.psize = (unsigned int) (sizeof(inband_shell_t)
+                                            - sizeof(x_object));
+
+    __ibshell_class.match = &inbandshell_equals;
+    __ibshell_class.on_append = &inbandshell_on_append;
+    __ibshell_class.on_assign = &inbandshell_on_assign;
+    __ibshell_class.on_remove = &inbandshell_remove_cb;
+    __ibshell_class.on_release = &inbandshell_release_cb;
+    __ibshell_class.try_write = &inbandshell_try_write;
+
+    x_class_register_ns(__ibshell_class.cname, &__ibshell_class,
+                        _XS("gobee:media"));
+    EXIT;
+    return;
+}
+PLUGIN_INIT(__inbandshell_init);
+
+#endif

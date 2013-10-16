@@ -33,8 +33,6 @@
  *     Author: artemka
  *
  */
-
-
 #ifndef X_LIB_H_
 #define X_LIB_H_
 
@@ -101,7 +99,7 @@ EXPORT_SYMBOL int x_isblank(int c);
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "x_config.h"
+#include <x_config.h>
 
 #if defined (WIN32) || defined(_WINDLL) || defined(WINDOWS)
 
@@ -121,6 +119,7 @@ EXPORT_SYMBOL int x_isblank(int c);
 #define x_strncpy strncpy
 #define x_write _write
 #define x_read _read
+#define x_close _close
 #define x_memset memset
 #define x_memcpy memcpy
 #define mkdir(x,y) _mkdir(x)
@@ -143,6 +142,8 @@ EXPORT_SYMBOL int x_isblank(int c);
 #define x_strncpy strncpy
 #define x_write write
 #define x_read read
+#define x_open open
+#define x_close close
 #define x_memset memset
 #define x_memcpy memcpy
 

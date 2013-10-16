@@ -2,11 +2,11 @@
  * transport_ctl.c
  *
  *  Created on: Jan 12, 2012
- *      Author: artemka
+ *  Author: CrossLine Media, LLC <http://www.clmedia.ru>
  */
 
 #undef DEBUG_PRFX
-#include <xwlib/x_config.h>
+#include <x_config.h>
 #if TRACE_XICECTL_ON
 #define DEBUG_PRFX "[__icetctl] "
 #endif
@@ -18,6 +18,8 @@
 #include <rtp.h>
 
 #include "sessions.h"
+
+//#undef IP_PKTINFO
 
 /**
  * Starting port number for rtp port allocation
@@ -36,9 +38,15 @@ __icectl_msg_tx(int sockfd, struct sockaddr *to, socklen_t tolen,
     size_t datasiz);
 
 static void
+route_rtcp_packet_in(x_io_stream *ice, void *rawrctp, int rtcplen)
+{
+}
+
+static void
 route_rtp_packet_in(x_io_stream *ice, rtp_hdr_t *rtp, int rtplen)
 {
   char tmpstr[32];
+  int plen;
   x_obj_attr_t hints =
     { 0, 0, 0 };
 
@@ -49,26 +57,31 @@ route_rtp_packet_in(x_io_stream *ice, rtp_hdr_t *rtp, int rtplen)
 
   setattr(_XS("id"), tmpstr, &hints);
 
-  if (!ice->media_owner)
+  if (!ice->media_owner_cache[rtp->octet2.control2.pt])
     {
       tmp = _CHLD(_PARNT(X_OBJECT(ice)), MEDIA_IN_CLASS_STR);
 //#error "FIXME"
-      ice->media_owner = _CHLD(tmp, tmpstr);
-      _REFGET(ice->media_owner);
-      if (!ice->media_owner)
+      ice->media_owner_cache[rtp->octet2.control2.pt] = _CHLD(tmp, tmpstr);
+      if (!ice->media_owner_cache[rtp->octet2.control2.pt])
         {
           TRACE("No such media type: %d; ufrag='%s'\n",
               rtp->octet2.control2.pt, _AGET(X_OBJECT(ice),"ufrag"));
           ERROR;
           return;
         }
+
+      _REFGET(ice->media_owner_cache[rtp->octet2.control2.pt]);
     }
 
-  TRACE("Writing %d bytes to media app %d\n", rtplen, rtp->octet2.control2.pt);
+  plen = rtplen - ((long long) &rtp->payload[0] - (long long) (void *) rtp);
+  TRACE("Writing %d bytes to media app %d (seq=%d)\n",
+        plen, rtp->octet2.control2.pt, rtp->seq);
 
-  _WRITE(ice->media_owner, &rtp->payload[0],
-      rtplen - ((long long) &rtp->payload[0] - (long long) (void *) rtp),
+  _WRITE(ice->media_owner_cache[rtp->octet2.control2.pt], &rtp->payload[0],
+      plen,
       &hints);
+
+  x_object_write_out(X_OBJECT(ice),&rtp->payload[0], plen, &hints);
 
   attr_list_clear(&hints);
 
@@ -127,8 +140,8 @@ __on_packet_in(x_io_stream *ice, struct sockaddr *to, socklen_t tolen,
 
   if (((stun_hdr_t *) buf)->ver_type.raw == htons(STUN_REQ))
     {
-//      TRACE("Received STUN REQUEST from %s:%d\n",
-//          inet_ntoa(((struct sockaddr_in *)from)->sin_addr), ntohs(((struct sockaddr_in *)from)->sin_port));
+      TRACE("Received STUN REQUEST from %s:%d\n",
+          inet_ntoa(((struct sockaddr_in *)from)->sin_addr), ntohs(((struct sockaddr_in *)from)->sin_port));
 
       stn_resp = stun_get_response(lkey, (stun_hdr_t *) buf, from);
 
@@ -139,8 +152,8 @@ __on_packet_in(x_io_stream *ice, struct sockaddr *to, socklen_t tolen,
   else if (((stun_hdr_t *) buf)->ver_type.raw == htons(STUN_RESP))
     {
 
-//      TRACE("Received STUN RESPONSE from %x:%d to %x\n",
-//          ((struct sockaddr_in *)from)->sin_addr.s_addr, ntohs(((struct sockaddr_in *)from)->sin_port), ((struct sockaddr_in *)to)->sin_addr.s_addr);
+      TRACE("Received STUN RESPONSE from %x:%d to %x\n",
+          ((struct sockaddr_in *)from)->sin_addr.s_addr, ntohs(((struct sockaddr_in *)from)->sin_port), ((struct sockaddr_in *)to)->sin_addr.s_addr);
 
       /**
        * @todo Add transaction ID checking here
@@ -160,11 +173,11 @@ __on_packet_in(x_io_stream *ice, struct sockaddr *to, socklen_t tolen,
             {
 #if 0 // DEBUG
               char addr1[64] =
-                { 0 };
+                { 0};
               char addr2[64] =
-                { 0 };
+                { 0};
               char addr3[64] =
-                { 0 };
+                { 0};
 
               x_inet_ntop(AF_INET, &((struct sockaddr_in *) from)->sin_addr,
                   &addr1[0], sizeof(addr1) - 1);
@@ -180,17 +193,33 @@ __on_packet_in(x_io_stream *ice, struct sockaddr *to, socklen_t tolen,
 #endif
               if ((*pair)->state == NICE_CHECK_IN_PROGRESS)
                 {
+#if ICE_PAIRS_CHECK
                   remoteportnum =
                       ntohs(
                           ((struct sockaddr_in *) &(*pair)->local->addr.s.addr)->sin_port);
-
+#endif
                   if (__netaddr_equals(&(*pair)->remote->addr.s.addr, from)
+#if ICE_PAIRS_CHECK
                       && ((is_rtp && !(remoteportnum & 0x1))
-                          || (!is_rtp && (remoteportnum & 0x1))))
+                          || (!is_rtp && (remoteportnum & 0x1)))
+#endif
+                          )
                     {
-//                      TRACE("Succeeded new pair... %s:%d <=> %s:%d\n",
-//                          &addr2[0], ntohs(((struct sockaddr_in *) &(*pair)->local->addr.s.addr)->sin_port), &addr3[0], ntohs(((struct sockaddr_in *)&(*pair)->remote->addr.s.addr)->sin_port));
+                      TRACE("Succeeded new candi... port:%d\n",
+                          ntohs(((struct sockaddr_in *)&(*pair)->remote->addr.s.addr)->sin_port));
                       (*pair)->state = NICE_CHECK_SUCCEEDED;
+                      if(!(ice->xobj.cr & ICE_FLAG_RTP_SUCCEEDED))
+                      {
+                          x_object *tmp;
+                          ice->xobj.cr |= ICE_FLAG_RTP_SUCCEEDED;
+                          if (!ice->c_pair_last_success)
+                              ice->c_pair_last_success = *pair;
+
+//                          tmp = _GNEW(_XS("$message"),NULL);
+//                          BUG_ON(!tmp);
+//                          _SETNM(tmp, _XS("transport-ready"));
+//                          _MCAST(ice,tmp)
+                      }
                       break;
                     }
                 }
@@ -251,9 +280,11 @@ __on_packet_in(x_io_stream *ice, struct sockaddr *to, socklen_t tolen,
               x_sprintf(portbuf, "%d", portnum);
 
               // find candidate with same attributes
-              for (o1 = _CHLD(ice,_XS("local-candidate")); o1; o1 = _NXT(o1))
+              for (o1 = _CHLD(ice,_XS("local-candidate")); o1;)
                 {
+                  _REFGET(o1);
                   a1 = _AGET(o1,_XS("ip"));
+                  a1 = a1 ? a1 : _AGET(o1,_XS("address")); // for google transport
                   a2 = _AGET(o1,_XS("port"));
                   if (a1 && a2 && EQ(a1,addrstrbuf) && EQ(a2,portbuf))
                     {
@@ -261,20 +292,24 @@ __on_packet_in(x_io_stream *ice, struct sockaddr *to, socklen_t tolen,
                       ok = 0;
                       break;
                     }
+                  o2 = o1;
+                  o1 = _NXT(o1);
+                  _REFPUT(o2, NULL);
                 }
 
               /* add if not found */
               if (ok)
                 {
-                  tmp = _NEW(_XS("$message"),NULL);
+                  tmp = _GNEW(_XS("$message"),NULL);
                   BUG_ON(!tmp);
 
                   _SETNM(tmp, _XS("local-candidate"));
 
                   _ASET(tmp, _XS("ip"), &addrstrbuf[0]);
+                  _ASET(tmp, _XS("address"), &addrstrbuf[0]); // for google transport
                   _ASET(tmp, _XS("port"), &portbuf[0]);
-                  _ASET(tmp, _XS("reladdr"), &addrstrbuf[0]);
-                  _ASET(tmp, _XS("relport"), &portbuf[0]);
+                  _ASET(tmp, _XS("rel-addr"), &addrstrbuf[0]);
+                  _ASET(tmp, _XS("rel-port"), &portbuf[0]);
                   _ASET(tmp, _XS("type"), _XS("srflx"));
                   _ASET(tmp, _XS("protocol"), _XS("udp"));
                   _ASET(tmp, _XS("network"), _XS("0"));
@@ -300,26 +335,28 @@ __on_packet_in(x_io_stream *ice, struct sockaddr *to, socklen_t tolen,
         {
 #if 0
           x_string_t mtype = _ENV(X_OBJECT(ice),_XS("mtype"));
+          TRACE("Media type: '%s'\n", mtype);
+
           if (mtype && EQ(mtype, _XS("audio")))
             {
               TRACE("Echo echoing AUDIO to socket %d, portnum=%d...\n",
                   sockfd, portnum);
               /* echo audio back */
-//              sendto(sockfd, buf,len,0,from,fromlen);
-              __icectl_msg_tx(sockfd, from, fromlen, to, tolen, flags, buf,
-                  len);
-
+              sendto(sockfd, buf, len, 0, from, fromlen);
+//              __icectl_msg_tx(sockfd, from, fromlen, to, tolen, flags, buf,
+//                  len);
             }
           else
 #endif
 
-          //  TRACE("Received RTP packet: echoing...\n");
-          //          x_object_try_write(X_OBJECT(ice), buf, len, NULL);
-          route_rtp_packet_in(ice, buf, len);
+            //  TRACE("Received RTP packet: echoing...\n");
+            //          x_object_try_write(X_OBJECT(ice), buf, len, NULL);
+            route_rtp_packet_in(ice, buf, len);
         }
       else
         {
           TRACE("Received RTCP packet\n");
+          route_rtcp_packet_in(ice, buf, len);
         }
     }
   return err;
@@ -355,14 +392,20 @@ __icectl_recvmsg(x_object *ice, int s, int flags, struct sockaddr *saddr,
   iov[0].iov_base = &buf[0];
   iov[0].iov_len = sizeof(buf);
 
+#if 1
   _gobee_iomsg_name(&mh) = saddr;
   _gobee_iomsg_namelen(&mh) = *addrlen;
+#else
+  _gobee_iomsg_name(&mh) = NULL;
+  _gobee_iomsg_namelen(&mh) = 0;
+#endif
   _gobee_iomsg_iov(&mh) = iov;
   _gobee_iomsg_iovlen(&mh) = 1;
   _gobee_iomsg_control(&mh) = &cmsbuf[0];
   _gobee_iomsg_controllen(&mh) = sizeof(cmsbuf);
 
-  /* clear buffer */x_memset(&cmsbuf[0], 0, sizeof(cmsbuf));
+  /* clear buffer */
+  x_memset(&cmsbuf[0], 0, sizeof(cmsbuf));
 
   err = x_recv_msg(s, &mh, flags);
 
@@ -381,9 +424,12 @@ __icectl_recvmsg(x_object *ice, int s, int flags, struct sockaddr *saddr,
 #endif /* LINUX */
 #ifndef WIN32
       pktinfo = (struct in_pktinfo *) CMSG_DATA(cmsg);
-      //      TRACE("ipi_spec_dst=%s, ipi_addr=%s\n",
-      //          inet_ntoa(pktinfo->ipi_spec_dst),
-      //          inet_ntoa(pktinfo->ipi_addr));
+            TRACE("ipi_spec_dst=%s, ipi_addr=%s, source addr=%s:%d\n",
+                inet_ntoa(pktinfo->ipi_spec_dst),
+                inet_ntoa(pktinfo->ipi_addr),
+                inet_ntoa(((struct sockaddr_in *)saddr)->sin_addr),
+                ntohs(((struct sockaddr_in *)saddr)->sin_port)
+                  );
       caddr.sin_addr = pktinfo->ipi_spec_dst;
 #endif
       break;
@@ -445,18 +491,17 @@ __icestun_resend_candidates(x_io_stream *ice)
       TRACE("Invalid session state: No local transport username...\n");
     }
 
-  TRACE("Sending STUN requests:\n");
 #ifndef CS_DISABLED
 //  CS_LOCK(CS2CS(ice->_c_pairs_lock));
+//  TRACE("locked candidate lock:\n");
 #endif
-  TRACE("locked candidate lock:\n");
 
   for (pair = &ice->c_pairs[0];
       pair < ice->c_pairs_top && pair < &ice->c_pairs[MAX_CONN_PAIRS] && *pair;
       pair++)
     {
       if ((*pair)->state == NICE_CHECK_WAITING
-          /* || (*pair)->state == NICE_CHECK_SUCCEEDED */)
+       || (*pair)->state == NICE_CHECK_IN_PROGRESS )
         {
           portnum = ntohs((uint16_t) (*pair)->remote->addr.s.ip4.sin_port);
 
@@ -476,8 +521,8 @@ __icestun_resend_candidates(x_io_stream *ice)
               ntohs( (uint16_t)(*pair)->remote->addr.s.ip4.sin_port));
 
           __icectl_msg_tx(sock, &(*pair)->remote->addr.s.addr,
-              sizeof(struct sockaddr_in), &(*pair)->local->addr.s.addr,
-              sizeof(struct sockaddr_in), 0, (char *) stunmsg, stunmsg_len);
+              sizeof(struct sockaddr_in), NULL,
+              0, 0, (char *) stunmsg, stunmsg_len);
 
           (*pair)->state = NICE_CHECK_IN_PROGRESS;
 
@@ -498,6 +543,9 @@ static void
 __icestun_resend_stun(x_io_stream *ice)
 {
 #if 1
+    x_string_t stunname_s = NULL;
+    x_string_t stunport_s = NULL;
+    uint16_t stunport = 3478;
   int sock;
   uint16_t portnum;
   size_t stunmsg_len;
@@ -507,8 +555,20 @@ __icestun_resend_stun(x_io_stream *ice)
 
   /* fake stun server address */
   stunsrv_addr.sin_family = AF_INET;
-  inet_aton("216.143.130.36", &stunsrv_addr.sin_addr);
-  stunsrv_addr.sin_port = htons(3478);
+
+  stunname_s = _ENV(ice,"stunserver");
+  stunport = _ENV(ice,"stunportnum");
+  if (!stunname_s)
+  {
+      stunname_s = X_STRING("216.143.130.36");
+  }
+  if (stunport_s)
+  {
+      stunport = atoi(stunport_s);
+  }
+
+  inet_aton(stunname_s, &stunsrv_addr.sin_addr);
+  stunsrv_addr.sin_port = htons(stunport);
 
   /**
    * @todo Memory leak here in 'stunmsg'
@@ -523,10 +583,12 @@ __icestun_resend_stun(x_io_stream *ice)
 //  CS_LOCK(CS2CS(ice->_c_pairs_lock));
 #endif
 
+#if ICE_PAIRS_CHECK
   for (pair = &ice->c_pairs[0];
-      pair < ice->c_pairs_top && pair < &ice->c_pairs[MAX_CONN_PAIRS] && *pair;
+      pair < ice->c_pairs_top
+       && pair < &ice->c_pairs[MAX_CONN_PAIRS] && *pair;
       pair++)
-    {
+  {
       stunmsg_len = sizeof(stun_hdr_t) + ntohs(stunmsg->mlen);
 
       TRACE("Sending STUN server request\n");
@@ -539,20 +601,33 @@ __icestun_resend_stun(x_io_stream *ice)
           &(*pair)->local->addr.s.addr, sizeof(struct sockaddr_in), 0,
           (char *) stunmsg, stunmsg_len);
 
-    }
+  }
+#else
+  stunmsg_len = sizeof(stun_hdr_t) + ntohs(stunmsg->mlen);
+
+  TRACE("Sending STUN server request\n");
+
+  __icectl_msg_tx(ice->sockv4_ctl, &stunsrv_addr,
+      sizeof(struct sockaddr_in), NULL,
+      0, 0, (char *) stunmsg, stunmsg_len);
+
+  __icectl_msg_tx(ice->sockv4, &stunsrv_addr, sizeof(struct sockaddr_in),
+      NULL, 0, 0,
+      (char *) stunmsg, stunmsg_len);
+#endif
 
 #ifndef CS_DISABLED
 //  CS_LOCK(CS2CS(ice->_c_pairs_lock));
 #endif
 
   // FIXME This request should be freed
-        x_free(stunmsg);
+  x_free(stunmsg);
 
 #endif
 }
 
 static void *
-__icectl_Periodic(struct ev_loop *loop, struct ev_io *data, int mask)
+__icectl_Periodic(xevent_dom_t *loop, struct ev_io *data, int mask)
 {
   x_io_stream *ice;
   ENTER;
@@ -561,12 +636,16 @@ __icectl_Periodic(struct ev_loop *loop, struct ev_io *data, int mask)
 
   if (mask & EV_TIMEOUT)
     {
-      //      TRACE("PERIODIC ICE EVENT!!!\n");
+//      TRACE("PERIODIC ICE EVENT!!!\n");
       __icestun_resend_candidates(ice);
       __icestun_resend_stun(ice);
 
       /* increase period */
-      ice->iowatcher_timer.repeat = ice->iowatcher_timer.repeat * 5;
+      if(++ice->timer_counter > ICE_STUN_RELAXATION_COUNT)
+      {
+          ice->timer_counter = 0;
+          ice->iowatcher_timer.repeat *= 2;
+      }
       ev_timer_again(ice->eventloop, &ice->iowatcher_timer);
     }
 
@@ -575,7 +654,7 @@ __icectl_Periodic(struct ev_loop *loop, struct ev_io *data, int mask)
 }
 
 static void
-__icectl_on_channel_ipv4_event(struct ev_loop *loop, struct ev_io *data,
+__icectl_on_channel_ipv4_event(xevent_dom_t *loop, struct ev_io *data,
     int mask)
 {
   int err = 0;
@@ -592,12 +671,14 @@ __icectl_on_channel_ipv4_event(struct ev_loop *loop, struct ev_io *data,
 
       TRACE("Received packet from %s\n", inet_ntoa(saddr.sin_addr));
     }
+    else
+      TRACE("IO mask=0x%x\n",mask);
   //  EXIT;
   return;
 }
 
 static void
-__icectl_on_channel_ipv4_ctl_event(struct ev_loop *loop, struct ev_io *data,
+__icectl_on_channel_ipv4_ctl_event(xevent_dom_t *loop, struct ev_io *data,
     int mask)
 {
   int err;
@@ -634,12 +715,11 @@ __icectl_msg_tx(int sockfd, struct sockaddr *to, socklen_t tolen,
   _gobee_iomsg_t mh;
 #ifdef IP_PKTINFO
   char cmsbuf[CMSG_LEN(sizeof(struct in_pktinfo))];
+  struct in_pktinfo *pktinfo;
+  struct cmsghdr *cmsg = (struct cmsghdr *) &cmsbuf[0];
 #else /* IP_PKTINFO */
   char cmsbuf[CMSG_LEN(0)];
 #endif /* IP_PKTINFO */
-
-  struct in_pktinfo *pktinfo;
-  struct cmsghdr *cmsg = (struct cmsghdr *) &cmsbuf[0];
 
   //  ENTER;
 
@@ -648,17 +728,21 @@ __icectl_msg_tx(int sockfd, struct sockaddr *to, socklen_t tolen,
 
   _gobee_iomsg_name(&mh) = to;
   _gobee_iomsg_namelen(&mh) = tolen;
-  _gobee_iomsg_iov(&mh) = (x_iobuf_t *) iov;
+  _gobee_iomsg_iov(&mh) = iov;
   _gobee_iomsg_iovlen(&mh) = 1;
+//  _gobee_iomsg_accrights(&mh) = NULL;            /* irrelevant to AF_INET */
+//  _gobee_iomsg_accrightslen(&mh) = 0;            /* irrelevant to AF_INET */
+  _gobee_iomsg_control(&mh) = (char *) NULL;
+  _gobee_iomsg_controllen(&mh) = 0;
+
+#if ICE_PAIRS_CHECK
   _gobee_iomsg_control(&mh) = (char *) cmsg;
-#ifdef IP_PKTINFO
+#if defined(IP_PKTINFO)
   _gobee_iomsg_controllen(&mh) = CMSG_LEN(sizeof(struct in_pktinfo));
 #else
   _gobee_iomsg_controllen(&mh) = CMSG_LEN(0);
 #endif
-
   x_memset(&cmsbuf[0], 0, sizeof(cmsbuf));
-
 #ifdef IP_PKTINFO
   cmsg->cmsg_level = IPPROTO_IP;
   cmsg->cmsg_type = IP_PKTINFO;
@@ -669,23 +753,44 @@ __icectl_msg_tx(int sockfd, struct sockaddr *to, socklen_t tolen,
   pktinfo->ipi_spec_dst.s_addr = ((struct sockaddr_in *) from)->sin_addr.s_addr;
 #endif /* WIN32 s*/
 #endif
+#endif
 
-//  TRACE("Sending to %s:%d\n",
-//      inet_ntoa(((struct sockaddr_in *)to)->sin_addr), ntohs(((struct sockaddr_in *)to)->sin_port));
-//
+  TRACE("Sending to %s:%d\n",
+      inet_ntoa(((struct sockaddr_in *)to)->sin_addr),
+        ntohs(((struct sockaddr_in *)to)->sin_port));
+
 //  TRACE("Sending as %s:%d\n",
 //      inet_ntoa(((struct sockaddr_in *)from)->sin_addr), ntohs(((struct sockaddr_in *)from)->sin_port));
 
   /* send message */
-  err = x_send_msg(sockfd, &mh, flags);
+//  err = x_send_msg(sockfd, &mh, flags);
 
-#if 0
+  err = sendto(sockfd,data,datasiz,0,to,tolen);
+
+#if 1
   if (err < 0)
     {
-      perror("ERROR Sending data///////////////\n");
+//      perror("ERROR Sending data:");
+#if ICE_PAIRS_CHECK
+      TRACE("ERROR!! Sending... %s:%d -> %s:%d : %s\n",
+            inet_ntoa(((struct sockaddr_in *)from)->sin_addr),
+            ntohs(((struct sockaddr_in *)from)->sin_port),
+            inet_ntoa(((struct sockaddr_in *)to)->sin_addr),
+            ntohs(((struct sockaddr_in *)to)->sin_port),
+            strerror(errno)
+            );
+#else
+      TRACE("ERROR!! Sending... -> %s:%d : %s\n",
+            inet_ntoa(((struct sockaddr_in *)to)->sin_addr),
+            ntohs(((struct sockaddr_in *)to)->sin_port),
+            strerror(errno)
+            );
+#endif
     }
   else
-  TRACE("Ok! Sent packet of size %d\n", err);
+  {
+    TRACE("Ok! Sent packet of size %d\n", err);
+  }
 #endif
 
   //  EXIT;
@@ -734,7 +839,7 @@ __icectl_msg_vtx(int sockfd, struct sockaddr *to, socklen_t tolen,
   TRACE("BUFCOUNT=%d, buflen[1]=%d,buflen[2]=%d\n",
       iovlen, iov[0].iov_len, iov[1].iov_len);
 
-#if 1
+#if ICE_PAIRS_CHECK
   _gobee_iomsg_control(&mh) = (char *) cmsg;
 #ifdef IP_PKTINFO
   _gobee_iomsg_controllen(&mh) = CMSG_LEN(sizeof(struct in_pktinfo));
@@ -780,7 +885,7 @@ __icectl_iostream_init(x_io_stream *ice)
       ice->sockv4_ctl = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
       if ((ice->sockv4 <= 0 || ice->sockv4_ctl <= 0))
         {
-          x_object_print_path(X_OBJECT(ice)->bus, 0);
+//          x_object_print_path(X_OBJECT(ice)->bus, 0);
           strerror_r(errno, sbuf, sizeof(sbuf) - 1);
           TRACE("Network unavailable, LOOPS_COUNT(%d), %s\n",
               loopcounter, sbuf);
@@ -802,12 +907,20 @@ __icectl_iostream_init(x_io_stream *ice)
   EXIT;
 }
 
+
+static inline int
+__icectl_get_next_rand_portnum(int *seed, int max_step) {
+    *seed = *seed * 1103515245 + 12345;
+    return((unsigned)(*seed/65536) % max_step);
+}
+
 static int
 __icectl_iostream_start(x_io_stream *ice)
 {
   int i;
   int err;
   struct sockaddr __mysrvaddr;
+  int seed = (int)ice;
   ENTER;
 
   /* bind to odd port for rtp payload */
@@ -825,13 +938,16 @@ __icectl_iostream_start(x_io_stream *ice)
       if (err)
         {
           TRACE("ERROR! Bind failed\n");
-          //      BUG_ON(err);
-          /* increment base port number by 600 */
-          current_rtp_portnum += 600;
+          /* increment base port number by random */
+          current_rtp_portnum += __icectl_get_next_rand_portnum(&seed,512);
           continue;
         }
       else
+      {
+          TRACE("ERROR! Bind port(%d)\n",ice->data_port);
+//          listen(ice->sockv4, -1);
         break;
+       }
     }
 
   if (err)
@@ -843,7 +959,11 @@ __icectl_iostream_start(x_io_stream *ice)
   /* bind to even port for rtcp payload */
   ((struct sockaddr_in *) &__mysrvaddr)->sin_port = htons(ice->ctl_port);
 
-  err = bind(ice->sockv4_ctl, &__mysrvaddr, sizeof(struct sockaddr));
+  if (!bind(ice->sockv4_ctl, &__mysrvaddr, sizeof(struct sockaddr)))
+    {
+//      listen(ice->sockv4, -1);
+    }
+  TRACE("OK! port usage: %d, %d\n", ice->data_port, ice->ctl_port);
 
   TRACE("Connecting to stun server '%s'\n",
       (char *)_ENV((x_object *)ice,"stunserver"));
@@ -857,7 +977,7 @@ __icectl_iostream_start(x_io_stream *ice)
       ice->sockv4_ctl, EV_READ /* | EV_WRITE */);
 
   /* add periodic listener */
-  ev_timer_init(&ice->iowatcher_timer, &__icectl_Periodic, 0., 1.);
+  ev_timer_init(&ice->iowatcher_timer, &__icectl_Periodic, 0., .5);
 
   EXIT;
 
@@ -890,19 +1010,27 @@ __icectl_collect_local_candidates(/* x_io_stream * */void *_ice)
 
   TRACE("Port usage: data(%d), ctl(%d)\n", ice->data_port, ice->ctl_port);
 
+#if 0
   netentry = x_object_from_path(X_OBJECT(ice)->bus, "__proc/$networking");
+#else
+  netentry = _CHLD(X_OBJECT(ice)->bus,_XS("__proc"));
   BUG_ON(!netentry);
+  netentry = _CHLD(netentry,_XS("$networking"));
+  BUG_ON(!netentry);
+#endif
 
+  x_object_print_path(netentry,0);
   for (ifentry = _CHLD(netentry,_XS("$interface")); ifentry; ifentry =
-      _NXT(ifentry))
+      _NXT(ifentry), ++i)
     {
       void *src = NULL;
 
       /* dataport candidate */
-      tmp = _NEW(_XS("$message"),NULL);
+      tmp = _GNEW(_XS("$message"),NULL);
       BUG_ON(!tmp);
 
       TRACE("ADDING CANDIDATE TO '%s' CHANNEL\n", _ENV(ice,"mtype"));
+      printf("ADDING CANDIDATE TO '%s' CHANNEL\n", _ENV(ice,"mtype"));
 
       _SETNM(tmp, _XS("local-candidate"));
       _ASET(tmp, _XS("ip"), _AGET(ifentry,_XS("ip")));
@@ -912,7 +1040,8 @@ __icectl_collect_local_candidates(/* x_io_stream * */void *_ice)
       _ASET(tmp, _XS("component"), _XS("1"));
       _ASET(tmp, _XS("generation"), _XS("0"));
       _ASET(tmp, _XS("foundation"), _XS("0"));
-      _ASET(tmp, _XS("priority"), _XS("2130705406"));
+      _ASET(tmp, _XS("network"), _XS("0"));
+      _ASET(tmp, _XS("priority"), _XS("2130705663"));
 
       _INS(X_OBJECT(ice), tmp);
 
@@ -924,9 +1053,18 @@ __icectl_collect_local_candidates(/* x_io_stream * */void *_ice)
       _INS(X_OBJECT(ice), tmp);
     }
 
+  TRACE("Added %d local candidates\n",i);
+
   _REFPUT(X_OBJECT(ice), NULL);
 
   EXIT;
+}
+
+static void
+__icectl_idle_cb  (xevent_dom_t *loop, struct ev_idle *w, int revents)
+{
+//    sched_yield();
+    usleep(100);
 }
 
 /**
@@ -936,36 +1074,39 @@ __icectl_collect_local_candidates(/* x_io_stream * */void *_ice)
 static void *
 __icectl_worker(void *ctx)
 {
+    struct ev_idle idle_watcher;
   int cand_tout = 3;
   x_io_stream *ice = (x_io_stream *) (void *) ctx;
 
   ENTER;
 
+#if 0 /* Changed 12.10.2012 */
   TRACE("Waiting on start condition...\n");
-#ifndef CS_DISABLED
-  CS_LOCK(CS2CS(ice->_worker_lock));
+#   ifndef CS_DISABLED
+     CS_LOCK(CS2CS(ice->_worker_lock));
+#   endif
 #endif
+
+     ev_idle_init (&idle_watcher, &__icectl_idle_cb);
+     ev_idle_start (ice->eventloop, &idle_watcher);
+
   TRACE("Started new thread\n");
-
-  ice->regs.cr0 &= ~((uint32_t) (1 << 1));
-
-  __icectl_collect_local_candidates(ice);
 
 #ifndef __DISABLE_MULTITHREAD__
   do
     {
-//      if (cand_tout-- > 0)
-//        __icectl_collect_local_candidates(ice);
-
-      /*ev_loop(ice->eventloop, EVLOOP_NONBLOCK);*/
-      ev_loop(ice->eventloop, 0);
+//      ev_loop(ice->eventloop, 0);
+      ev_loop(ice->eventloop, EVLOOP_NONBLOCK);
     }
-  while (!(ice->regs.cr0 & (1 << 0)) /* thread stop condition!!! */);
+  while ((ice->regs.cr0 & (1 << 1)) /* thread stop condition!!! */);
 #endif
 
-#ifndef CS_DISABLED
-  CS_UNLOCK(CS2CS(ice->_worker_lock));
+#if 0 /* Changed 12.10.2012 */
+#   ifndef CS_DISABLED
+     CS_UNLOCK(CS2CS(ice->_worker_lock));
+#   endif
 #endif
+
 
   EXIT;
   return NULL;
@@ -974,25 +1115,20 @@ __icectl_worker(void *ctx)
 static int
 __icectl_worker_start(x_io_stream *ice)
 {
-  int err;
+  int err = 0;
 
   ENTER;
 
-  __icectl_iostream_init(ice);
-  err = __icectl_iostream_start(ice);
-  if (err)
-    {
-      TRACE("ERROR\n");
-      goto _ws_exit;
-    }
-
+  TRACE("\n");
   ice->eventloop = ev_loop_new(EVFLAG_AUTO);
   BUG_ON(!ice->eventloop);
   ev_io_start(ice->eventloop, &ice->iowatcher_ipv4);
   ev_io_start(ice->eventloop, &ice->iowatcher_ipv4_ctl);
   ev_timer_start(ice->eventloop, &ice->iowatcher_timer);
 
-  x_thread_run(&ice->input_tid, &__icectl_worker, (void *) ice);
+  TRACE("\n");
+  if(x_thread_run(&ice->input_tid, &__icectl_worker, (void *) ice) == 0)
+      ice->regs.cr0 |= (1 << 1); // started state
 
   _ws_exit:
   EXIT;
@@ -1003,16 +1139,21 @@ static int
 __icectl_worker_stop(x_io_stream *ice)
 {
   /* cancel working thread */
-  ice->regs.cr0 &= ~((uint32_t) (1 << 0));
+  ice->regs.cr0 &= ~((uint32_t) (1 << 1));
 
-#ifndef CS_DISABLED
-  CS_LOCK(CS2CS(ice->_worker_lock));
-  CS_UNLOCK(CS2CS(ice->_worker_lock));
+#if 0 /* Changed 12.10.2012 */
+#   ifndef CS_DISABLED
+      CS_LOCK(CS2CS(ice->_worker_lock));
+      CS_UNLOCK(CS2CS(ice->_worker_lock));
+#   endif
 #endif
 
   ev_io_stop(ice->eventloop, &ice->iowatcher_ipv4);
   ev_io_stop(ice->eventloop, &ice->iowatcher_ipv4_ctl);
   ev_timer_stop(ice->eventloop, &ice->iowatcher_timer);
+
+  pthread_join(ice->input_tid,NULL);
+  
 }
 
 static int
@@ -1023,6 +1164,8 @@ __icectl_insert_local_candidate(x_io_stream *ice, x_candidate *cand)
 
   int err = 0;
   ENTER;
+
+  TRACE("%d\n", cand->stream_id);
 
   /** @todo CS_LOCK() should check or return error */
   if (ice->locals_top >= &ice->locals[MAX_CONN_PAIRS])
@@ -1042,13 +1185,13 @@ __icectl_insert_local_candidate(x_io_stream *ice, x_candidate *cand)
       pair->state = NICE_CHECK_WAITING;
 
       /* push new pair into pairs stack */
-#ifndef CS_DISABLED
-  CS_LOCK(CS2CS(ice->_c_pairs_lock));
-#endif
+//#ifndef CS_DISABLED
+//      CS_LOCK(CS2CS(ice->_c_pairs_lock));
+//#endif
       *ice->c_pairs_top++ = pair;
-#ifndef CS_DISABLED
-  CS_UNLOCK(CS2CS(ice->_c_pairs_lock));
-#endif
+//#ifndef CS_DISABLED
+//      CS_UNLOCK(CS2CS(ice->_c_pairs_lock));
+//#endif
     }
 
   ilc_end:
@@ -1072,10 +1215,17 @@ __icectl_insert_remote_candidate(x_io_stream *ice, x_candidate *remote)
     goto irc_end;
   *ice->remotes_top++ = remote;
 
-  for (local = &ice->locals[0];
+  TRACE("%d\n", remote->stream_id);
+
+#if ICE_PAIRS_CHECK
+  for (
+       local = &ice->locals[0];
       local < ice->locals_top && local < &ice->locals[MAX_CONN_PAIRS] && *local;
       local++)
     {
+#else
+  local = &ice->locals[0];
+#endif
       pair = x_malloc(sizeof(struct x_candidate_pair));
       x_memset(pair, 0, sizeof(struct x_candidate_pair));
       pair->remote = remote;
@@ -1083,13 +1233,17 @@ __icectl_insert_remote_candidate(x_io_stream *ice, x_candidate *remote)
       pair->stream_id = random();
       pair->state = NICE_CHECK_WAITING;
 #ifndef CS_DISABLED
-  CS_LOCK(CS2CS(ice->_c_pairs_lock));
+      CS_LOCK(CS2CS(ice->_c_pairs_lock));
 #endif
       *ice->c_pairs_top++ = pair;
 #ifndef CS_DISABLED
-  CS_UNLOCK(CS2CS(ice->_c_pairs_lock));
+      CS_UNLOCK(CS2CS(ice->_c_pairs_lock));
 #endif
-    }
+
+#if ICE_PAIRS_CHECK
+}
+#else
+#endif
 
   irc_end:
 
@@ -1104,26 +1258,39 @@ icectl_on_create(x_object *o)
   char _pwd[48];
   x_io_stream *ice = (x_io_stream *) (void *) o;
   ENTER;
+
+//  memset(ice,0,sizeof(x_io_stream));
+
+  TRACE("\n");
+
   ice->request = 0;
   ice->c_pairs_top = &ice->c_pairs[0];
   ice->locals_top = &ice->locals[0];
   ice->remotes_top = &ice->remotes[0];
+  ice->regs.cr0 = 0;
+
+  x_memset(ice->media_owner_cache,0,sizeof(ice->media_owner_cache));
 
 #ifndef CS_DISABLED
+#if 0 /* Changed 12.10.2012 */
   CS_INIT(CS2CS(ice->_worker_lock));
   CS_LOCK(CS2CS(ice->_worker_lock));
+#endif
   CS_INIT_ERRCHK(CS2CS(ice->_c_pairs_lock));
 #endif
 
   /* we initialize pwd and ufrag here,
    * not in 'append' call because
    * of we need to be ready before appending to parent
-   */x_snprintf(_ufrag, 5, "%04d", random());
+   */
+
+  x_snprintf(_ufrag, 5, "%04d", random());
   x_snprintf(_pwd, sizeof(_pwd) - 1, "ice%08d", random());
 
   _ASET(o, "xmlns", "urn:xmpp:jingle:transports:ice-udp:1");
   _ASET(o, "ufrag", _ufrag);
   _ASET(o, "pwd", _pwd);
+
 
   EXIT;
 }
@@ -1141,25 +1308,46 @@ icectl_on_append(x_object *o, x_object *parent)
 
   TRACE("\n");
 
-  x_object_print_path(o, 0);
+  // set transport object ready
+  _CRSET(o,1);
 
-  TRACE("\n");
+#if 0 /* Changed 12.10.2012 */
+  /**
+    * FIXME This MUST be called when session activated (see x_session_start())
+    * @todo This MUST be called when session activated (see x_session_start())
+    */
   __icectl_worker_start(ice);
+#endif
+
+  __icectl_iostream_init(ice);
+  err = __icectl_iostream_start(ice);
+  if (err)
+    {
+      TRACE("ERROR\n");
+      return -1;
+    }
+
+  // collect local transport candidates
+  __icectl_collect_local_candidates(ice);
 
   TRACE("\n");
 #if 1
-  if (!(ice->regs.cr0 & (1 << 1)) /* worker already started */
-  && ice->otherufrag && ice->otherpwd)
+  if (!(ice->regs.cr0 & (1 << 1)) /* worker not started */
+    && ice->otherufrag && ice->otherpwd)
     {
       TRACE("\n");
-//      ice->request = get_stun_full_request(_AGET(o,"ufrag"),
-//          ice->otherufrag, ice->otherpwd);
 
-#ifndef CS_DISABLED
+#if 0 /* Changed 12.10.2012 */
+#   ifndef CS_DISABLED
       CS_UNLOCK(CS2CS(ice->_worker_lock));
+#   endif
+#else
+    __icectl_worker_start(ice);
 #endif
+
     }
 #endif
+
   /*
    _ASET(o,_XS("stunserver"),_XS("stun.sipgate.net"));
    _ASET(o,_XS("stunport"),_XS("stun.sipgate.net"));
@@ -1178,12 +1366,24 @@ icectl_on_append(x_object *o, x_object *parent)
   return err;
 }
 
-static void UNUSED
-icectl_remove_cb(x_object *o)
+static void
+icectl_on_remove(x_object *o)
 {
+  int i = 0;
   x_io_stream *ice = (x_io_stream *) (void *) o;
   ENTER;
+  TRACE("\n");
+  
+  ice->xobj.cr &= ~ICE_FLAG_RTP_SUCCEEDED;
   __icectl_worker_stop(ice);
+  
+  // clean payload cache
+  for (i=0;i<PAYLOAD_CACHE_SIZE;i++)
+  {
+    if (ice->media_owner_cache[i])
+      _REFPUT(ice->media_owner_cache[i], NULL);
+  }
+  
   EXIT;
 }
 
@@ -1205,7 +1405,6 @@ icectl_on_child_append(x_object *o, x_object *child)
   x_object *body;
   //  ENTER;
 
-  TRACE("Appended '%s'\n", _GETNM(child));
   // x_object_print_path(child, 0);
   //  attr_list_init(&hints);
 
@@ -1214,11 +1413,9 @@ icectl_on_child_append(x_object *o, x_object *child)
       cand = x_malloc(sizeof(x_candidate));
       err = __icestun_xobj_to_sockaddr_in(child, &cand->addr.s.ip4);
 
-      TRACE("\n");
       if (!err)
         {
-          TRACE("\n");
-
+            TRACE("INSERTING local cand\n");
           __icectl_insert_local_candidate(ice, cand);
 
           TRACE("\n");
@@ -1228,22 +1425,20 @@ icectl_on_child_append(x_object *o, x_object *child)
           /* Set candidate id */
           _ASET(child, _XS("id"), buf);
 
-          msg = _NEW(_XS("$message"),NULL);
+          msg = _GNEW(_XS("$message"),NULL);
           _ASET(msg, _XS("subject"), _XS("candidate-new"));
 
           TRACE("\n");
 
           body = _CPY(child);
 
-          TRACE("\n");
-
           _SETNM(body, "candidate");
           _INS(msg, body);
 
-          TRACE("\n");
-
 //          if (EQ(_AGET(child,"type"),"srflx"))
           x_object_send_down(_PARNT(o), msg, &hints);
+
+          _REFPUT(msg,NULL);
 
           TRACE("\n");
         }
@@ -1298,7 +1493,7 @@ icectl_equals(x_object *o, x_obj_attr_t *attrs)
 }
 
 static int
-icectl_classmatch(UNUSED x_object *to, x_obj_attr_t *attr)
+icectl_classmatch(x_object *to UNUSED, x_obj_attr_t *attr)
 {
   ENTER;
   EXIT;
@@ -1315,6 +1510,12 @@ icectl_try_writev(x_object *o, const struct iovec *iov, int iovcnt,
   int sockfd = ice->sockv4;
 
   ENTER;
+
+  if (!(ice->xobj.cr & ICE_FLAG_RTP_SUCCEEDED))
+    {
+      TRACE("Transport not ready!!!\n");
+      return -1;
+    }
 
   if (iovcnt < 3)
     {
@@ -1344,15 +1545,15 @@ icectl_try_writev(x_object *o, const struct iovec *iov, int iovcnt,
 static int
 icectl_try_write(x_object *o, void *buf, int len, x_obj_attr_t *attr)
 {
-  int err;
+  int err = -1;
   struct x_candidate_pair **pair;
   const char *typ = NULL;
   BOOL isctl = FALSE;
   x_io_stream *ice = (x_io_stream *) (void *) o;
   struct sockaddr *raddr = NULL; /* remote address (destination) */
   struct sockaddr *laddr = NULL; /* our local address (source) */
-  struct sockaddr_in _raddr;
-  struct sockaddr_in _laddr;
+//  struct sockaddr_in _raddr;
+//  struct sockaddr_in _laddr;
   int sockfd = ice->sockv4;
   int ssrc;
 
@@ -1361,6 +1562,12 @@ icectl_try_write(x_object *o, void *buf, int len, x_obj_attr_t *attr)
 //      EXIT;
 //      return -1;
 //    }
+
+  if (!(ice->xobj.cr & ICE_FLAG_RTP_SUCCEEDED))
+    {
+      TRACE("Transport not ready!!!\n");
+      return -1;
+    }
 
   /**
    * @todo This attribute checking peace is slow > redesign this
@@ -1397,7 +1604,8 @@ icectl_try_write(x_object *o, void *buf, int len, x_obj_attr_t *attr)
               if (raddr->sa_family == AF_INET)
                 if (((struct sockaddr_in *) raddr)->sin_addr.s_addr)
                   {
-                    ice->c_pair_last_success = *pair;
+                    if (!ice->c_pair_last_success)
+                        ice->c_pair_last_success = *pair;
                     break;
                   }
             }
@@ -1411,7 +1619,9 @@ icectl_try_write(x_object *o, void *buf, int len, x_obj_attr_t *attr)
       ssrc = ice->c_pair_last_success->local->stream_id;
     }
 
-  if (raddr && laddr)
+  if (raddr
+          && laddr
+          )
     {
       const char *tstr;
       x_iobuf_t iov[2];
@@ -1465,7 +1675,7 @@ icectl_try_write(x_object *o, void *buf, int len, x_obj_attr_t *attr)
        * @code
        * $ gst-launch-0.10  udpsrc port=24444 caps=application/x-rtp,media=video,payload=96,clock-rate=90000,encoding-name=THEORA
        *        ! queue ! rtptheoradepay ! theoradec ! ffmpegcolorspace ! videoscale ! ximagesink
-       * @encode
+       * @endcode
        */
 //#define DIAGNOSE
 #ifndef DIAGNOSE
@@ -1500,7 +1710,7 @@ icectl_try_write(x_object *o, void *buf, int len, x_obj_attr_t *attr)
 
       TRACE("Sent %d bytes\n", err);
 
-#ifdef DEBUG
+#if 0
         {
           pcapfd = open("sender.pcap", O_WRONLY | O_APPEND);
 
@@ -1524,7 +1734,7 @@ icectl_try_write(x_object *o, void *buf, int len, x_obj_attr_t *attr)
       TRACE("Cannot find valid address to send!!!\n");
     }
 
-  return 1;
+  return err;
 }
 
 static int UNUSED
@@ -1542,6 +1752,8 @@ icectl_tx(x_object *to, x_object *o, x_obj_attr_t *ctx_attrs)
   _INS(msg, o);
 
   err = x_object_send_down(x_object_get_parent(to), msg, NULL);
+
+  _REFPUT(msg, NULL);
 
   EXIT;
   return err;
@@ -1561,6 +1773,8 @@ icectl_assign(x_object *o, x_obj_attr_t *attr)
   pwd = getattr(_XS("pwd"), attr);
   lufrag = _ENV(X_OBJECT(ice),_XS("ufrag"));
 
+  TRACE("%s-%s-%s\n",ufrag,pwd,lufrag);
+
   /**
    * @todo Fixme This duplicated in on_append() func,
    * One state transition func should be provided for
@@ -1572,16 +1786,28 @@ icectl_assign(x_object *o, x_obj_attr_t *attr)
   if (pwd && !ice->otherpwd)
     ice->otherpwd = x_strdup(pwd);
 
-#if 1
-  if (!(ice->regs.cr0 & (1 << 1)) /* worker started */
-  && ice->otherufrag && ice->otherpwd && lufrag)
-    {
-#ifndef CS_DISABLED
-      CS_UNLOCK(CS2CS(ice->_worker_lock));
-#endif
-    }
-#endif
 
+  /*
+    start worker thread if have not yet started
+    but already connected to parent
+    */
+  if (_PARNT(o) != NULL
+          && !(ice->regs.cr0 & (1 << 1)) /* worker not started */
+          && ice->otherufrag && ice->otherpwd)
+  {
+      TRACE("\n");
+#if 0 /* Changed 12.10.2012 */
+#   ifndef CS_DISABLED
+      CS_UNLOCK(CS2CS(ice->_worker_lock));
+#   endif
+#else
+      __icectl_worker_start(ice);
+#endif
+  }
+    else
+  {
+      TRACE("\n");
+  }
   EXIT;
   return o;
 }
@@ -1596,6 +1822,9 @@ __plugin_init void
 __icectl_init(void)
 {
   ENTER;
+
+  TRACE("objclass(%p)\n",&__icectl_objclass);
+
   __icectl_objclass.cname = X_STRING("__icectl");
   __icectl_objclass.psize = (unsigned int) (sizeof(x_io_stream)
       - sizeof(x_object));
@@ -1603,7 +1832,7 @@ __icectl_init(void)
   __icectl_objclass.classmatch = &icectl_classmatch;
   __icectl_objclass.on_create = &icectl_on_create;
   __icectl_objclass.on_append = &icectl_on_append;
-  __icectl_objclass.on_remove = &icectl_remove_cb;
+  __icectl_objclass.on_remove = &icectl_on_remove;
   __icectl_objclass.on_child_append = &icectl_on_child_append;
   __icectl_objclass.on_release = &icectl_release_cb;
   __icectl_objclass.try_writev = &icectl_try_writev;
@@ -1612,7 +1841,8 @@ __icectl_init(void)
   __icectl_objclass.on_assign = &icectl_assign;
   __icectl_objclass.try_write = &icectl_try_write;
 
-  x_class_register_ns(__icectl_objclass.cname, &__icectl_objclass, "jingle");
+  x_class_register_ns(__icectl_objclass.cname,
+                      &__icectl_objclass, "urn:xmpp:jingle:transports:ice-udp:1");
   EXIT;
   return;
 }

@@ -9,7 +9,11 @@
 #include <stdlib.h>
 
 #undef DEBUG_PRFX
+#include <x_config.h>
+#if TRACE_XMPPTLS_ON
 #define DEBUG_PRFX "[tls] "
+#endif
+
 #include <xwlib/x_types.h>
 #include <xwlib/x_utils.h>
 

@@ -42,7 +42,7 @@
  */
 
 #undef DEBUG_PRFX
-#include <xwlib/x_config.h>
+#include <x_config.h>
 #if TRACE_XDISCO_ON
 #define DEBUG_PRFX "[bus] "
 #endif
@@ -93,7 +93,7 @@ ___get_query_response(x_object *procdir, int reqtype, const char *item,
   ENTER;
   TRACE("%p,jid=%s,%s,%s\n", (void *)procdir, jid, item, node);
 
-  msg = _NEW("query","gobee");
+  msg = _GNEW("query","gobee");
 
   xmlns = alloca((item ? strlen(item) : 0) + strlen(
           "http://jabber.org/protocol/disco") + 2);
@@ -111,7 +111,7 @@ ___get_query_response(x_object *procdir, int reqtype, const char *item,
   /* add each proc entry */
   for (tmp = _CHLD(ctx, NULL); tmp; tmp = _SBL(tmp))
     {
-      itemnode = _NEW("item","gobee");
+      itemnode = _GNEW("item","gobee");
       //x_object_setattr(itemnode, "jid", jid);
       _ASET(itemnode, "node", _GETNM(tmp));
       _ASET(itemnode, "name", _AGET(tmp, "name"));
@@ -158,13 +158,13 @@ ___disco_query_on_assign(x_object *o, x_obj_attr_t *attrs)
           TRACE("Bus name -> %s\n", _GETNM(o->bus));
           TRACE("Node name -> %s\n", attr);
 
-          msg = _NEW("iq","gobee");
+          msg = _GNEW("iq","gobee");
           _ASET(msg, "type", "result");
           _ASET(msg, "from", _ENV(X_OBJECT(o), "jid"));
           _ASET(msg, "to", _ENV(X_OBJECT(o), "from"));
           _ASET(msg, "id", _ENV(X_OBJECT(o), "id"));
 
-          query = _NEW("query","gobee");
+          query = _GNEW("query","gobee");
           _ASET(query, "xmlns", xmlns);
 
           /**
@@ -172,14 +172,14 @@ ___disco_query_on_assign(x_object *o, x_obj_attr_t *attrs)
            */
           if (x_strstr(attr, "video-v1"))
             {
-              feature = _NEW("feature","caps");
+              feature = _GNEW("feature","caps");
               _ASET(feature, "var",
                   "http://www.google.com/xmpp/protocol/video/v1");
               _INS(query, feature);
             }
           else if (x_strstr(attr, "voice-v1"))
             {
-              feature = _NEW("feature","caps");
+              feature = _GNEW("feature","caps");
               _ASET(feature, "var",
                   "http://www.google.com/xmpp/protocol/voice/v1");
               _INS(query, feature);
@@ -191,7 +191,8 @@ ___disco_query_on_assign(x_object *o, x_obj_attr_t *attrs)
 
           _INS(msg, query);
           x_object_send_down(X_OBJECT(o->bus), msg, NULL);
-        }
+          _REFPUT(msg,NULL);
+       }
     }
   else if (EQ(item, "items"))
     {
@@ -199,7 +200,7 @@ ___disco_query_on_assign(x_object *o, x_obj_attr_t *attrs)
       TRACE("Object name -> %s\n", x_object_get_name(o));
       TRACE("Bus name -> %s\n", x_object_get_name(o->bus));
 
-      msg = _NEW("iq","gobee");
+      msg = _GNEW("iq","gobee");
       _ASET(msg, "type", "result");
       _ASET(msg, "from", _ENV(X_OBJECT(o), "jid"));
       _ASET(msg, "to", _ENV(X_OBJECT(o), "from"));
@@ -209,7 +210,8 @@ ___disco_query_on_assign(x_object *o, x_obj_attr_t *attrs)
           ___get_query_response(x_object_get_child( o->bus, "__proc"), 0, item, attr));
 
       x_object_send_down(X_OBJECT(o->bus), msg, NULL);
-    }
+      _REFPUT(msg,NULL);
+   }
 
   EXIT;
   __assignout: return o;
@@ -251,7 +253,7 @@ disco_proto_init(void)
       - sizeof(x_object));
   disco_query_class.match = &___disco_query_match;
   disco_query_class.on_assign = &___disco_query_on_assign;
-  disco_query_class.finalize = &___disco_query_exit;
+  disco_query_class.commit = &___disco_query_exit;
 
   x_class_register_ns(disco_query_class.cname, &disco_query_class,
       "http://jabber.org/protocol/disco");

@@ -11,7 +11,12 @@
 /* #include <strings.h> */
 
 #undef DEBUG_PRFX
+
+#include <x_config.h>
+#if TRACE_XFEATURES_ON
 #define DEBUG_PRFX "[features] "
+#endif
+
 #include <xwlib/x_types.h>
 #include <xwlib/x_obj.h>
 #include <xwlib/x_utils.h>
@@ -94,11 +99,13 @@ features_exit(x_object *this__)
 
   ENTER;
 
-  printf("%s:%s():%d\n",__FILE__,__FUNCTION__,__LINE__);
+  TRACE("%s:%s():%d\n",__FILE__,__FUNCTION__,__LINE__);
 
   if (ft->msgslot)
     {
-      x_object_send_down(x_object_get_parent(this__), ft->msgslot, NULL);
+      x_object_send_down(x_object_get_parent(this__),
+                         ft->msgslot, NULL);
+      _REFPUT(ft->msgslot, NULL);
     }
 
   ft->msgslot = NULL;
@@ -115,7 +122,7 @@ features_tx(x_object *o, x_object *msg, x_obj_attr_t *attrs)
 
   if (!ft->msgslot)
     {
-      ft->msgslot = msg;
+      ft->msgslot = x_object_full_copy(msg);
     }
 
   EXIT;
@@ -155,7 +162,8 @@ tls_append(x_object *me, x_object *parent)
       msg = x_object_new("starttls");
       x_object_setattr(msg, "xmlns", "urn:ietf:params:xml:ns:xmpp-tls");
       x_object_send_down(parent, msg, NULL);
-    }
+      _REFPUT(msg, NULL);
+  }
 
   EXIT;
   return 0;
@@ -168,7 +176,7 @@ tls_exit(x_object *o)
   struct x_transport *t = NULL;
   ENTER;
 
-  printf("%s:%s():%d\n",__FILE__,__FUNCTION__,__LINE__);
+  TRACE("%s:%s():%d\n",__FILE__,__FUNCTION__,__LINE__);
 
   oname = x_object_get_name(o);
 
@@ -179,7 +187,7 @@ tls_exit(x_object *o)
         {
           x_bus_set_transport((struct x_bus *) o->bus, t);
         }
-      x_bus_reset((struct x_bus *) o->bus);
+      x_bus_reset_stream((struct x_bus *) o->bus);
     }
   else if (EQ(oname,"failure"))
     {
@@ -213,7 +221,7 @@ stream_features_init(void)
   features_class.on_remove = &features_remove;
   features_class.on_release = &features_release;
   features_class.on_assign = &features_assign;
-  features_class.finalize = &features_exit;
+  features_class.commit = &features_exit;
   features_class.tx = &features_tx;
 
   x_class_register_ns(features_class.cname, &features_class,
@@ -223,7 +231,7 @@ stream_features_init(void)
   starttls_class.psize = 0;
   starttls_class.match = &tls_match;
   starttls_class.on_append = &tls_append;
-  starttls_class.finalize = &tls_exit;
+  starttls_class.commit = &tls_exit;
 
   x_class_register_ns("starttls", &starttls_class,
       "urn:ietf:params:xml:ns:xmpp-tls");

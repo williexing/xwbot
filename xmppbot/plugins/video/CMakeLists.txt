@@ -1,6 +1,10 @@
 add_subdirectory( codec )
+IF(LINUX)
+add_subdirectory( camlinux )
+add_subdirectory( vhid )
 add_subdirectory( vcam )
-
+add_subdirectory( fbcam )
+ENDIF(LINUX)
 link_directories( ${lib_contrib_dir}  )
 INCLUDE(CPack)
 ENABLE_TESTING()

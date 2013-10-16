@@ -37,15 +37,18 @@ CHECK_FUNCTION_EXISTS(port_create HAVE_PORT_CREATE)
 
 SET(STDC_HEADERS 1)
 
-SET( libev_include_dir "${PROJECT_SOURCE_DIR}/qwe123" )
+#SET( libev_include_dir "${PROJECT_SOURCE_DIR}/qwe123" )
 
 #SET( include_contrib_dir ${include_contrib_dir} ${libev_include_dir} )
 
 ADD_DEFINITIONS(-DHAVE_CONFIG_H)
 
-CONFIGURE_FILE(config.h.cmake ${CMAKE_CURRENT_SOURCE_DIR}/config.h)
+CONFIGURE_FILE(config.h.cmake ${LIBRARY_OUTPUT_PATH}/include/ev_config.h)
 
+INCLUDE_DIRECTORIES(${LIBRARY_OUTPUT_PATH}/include)
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
+
+#SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DEV_CONFIG_H=<ev_config.h>")
 
 IF(WIN32)
 ADD_LIBRARY(ev STATIC ev.c event.c)

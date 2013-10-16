@@ -12,7 +12,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CORE_CFLAGS}")
 
 include_directories( ${include_top_dir} )
 include_directories( ${include_top_dir}/include )
-
+INCLUDE_DIRECTORIES(${LIBRARY_OUTPUT_PATH}/include)
 
 add_library(xwcrypt base64.c crc32.c crypt_mod.c md5.c sha1_rfc3174.c) 
 target_link_libraries(xwcrypt xofactory)

@@ -353,7 +353,8 @@ set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS}" CACHE STRING "c flags" )
 #-L${LIBCPP_LINK_DIR} -lstdc++ -lsupc++
 #Also, this is *required* to use the following linker flags that routes around
 #a CPU bug in some Cortex-A8 implementations:
-set( LINKER_FLAGS "-Wl,--fix-cortex-a8 -L\"${STL_LIBRARIES_PATH}\" -L\"${CMAKE_INSTALL_PREFIX}/libs/${ARMEABI_NDK_NAME}\" -lstdc++ -lsupc++ " )
+# set( LINKER_FLAGS "-Wl,--fix-cortex-a8 -L\"${STL_LIBRARIES_PATH}\" -L\"${CMAKE_INSTALL_PREFIX}/libs/${ARMEABI_NDK_NAME}\" -lstdc++ -lsupc++ " )
+set( LINKER_FLAGS "-Wl,--fix-cortex-a8 -L\"${STL_LIBRARIES_PATH}\" -L\"${CMAKE_INSTALL_PREFIX}/libs/${ARMEABI_NDK_NAME}\" -lstdc++ " )
 
 set( NO_UNDEFINED ON CACHE BOOL "Don't all undefined symbols" )
 if( NO_UNDEFINED )
